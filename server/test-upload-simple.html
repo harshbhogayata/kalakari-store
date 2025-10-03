@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Simple Image Upload Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        input[type="file"] { margin: 10px 0; }
+        button { padding: 10px 20px; background: #007bff; color: white; border: none; cursor: pointer; }
+        button:hover { background: #0056b3; }
+        #result { margin-top: 20px; padding: 10px; border: 1px solid #ddd; }
+        img { max-width: 300px; margin-top: 10px; }
+    </style>
+</head>
+<body>
+    <h1>🚀 Kalakari Image Upload Test</h1>
+    
+    <form id="uploadForm" enctype="multipart/form-data">
+        <p><strong>Select an image to test upload:</strong></p>
+        <input type="file" id="imageFile" name="image" accept="image/*" required>
+        <br><br>
+        <button type="submit">📤 Upload Image</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const fileInput = document.getElementById('imageFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                document.getElementById('result').innerHTML = '<p style="color: red;">❌ Please select a file</p>';
+                return;
+            }
+            
+            const formData = new FormData();
+            formData.append('image', file);
+            
+            document.getElementById('result').innerHTML = '<p>⏳ Uploading image...</p>';
+            
+            try {
+                const response = await fetch('http://localhost:5000/api/upload/product', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('result').innerHTML = `
+                        <p style="color: green;">✅ Upload successful!</p>
+                        <p><strong>File URL:</strong> <a href="${result.data.url}" target="_blank">${result.data.url}</a></p>
+                        <img src="${result.data.url}" alt="Uploaded image" style="max-width: 300px; border: 1px solid #ccc; margin-top: 10px; display: block;">
+                        <p><em>Image saved locally in server/uploads/ folder</em></p>
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">❌ Upload failed: ${result.message}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p style="color: red;">❌ Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>

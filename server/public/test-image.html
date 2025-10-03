@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Image Upload Test</title>
+</head>
+<body>
+    <h1>Kalakari Image Upload Test</h1>
+    
+    <form id="uploadForm" enctype="multipart/form-data">
+        <input type="file" id="imageFile" name="image" accept="image/*" required>
+        <button type="submit">Upload Image</button>
+    </form>
+    
+    <div id="result"></div>
+    
+    <script>
+        document.getElementById('uploadForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('imageFile');
+            const file = fileInput.files[0];
+            
+            if (!file) {
+                document.getElementById('result').innerHTML = '<p style="color: red;">Please select a file</p>';
+                return;
+            }
+            
+            formData.append('image', file);
+            
+            try {
+                const response = await fetch('http://localhost:5001/api/upload/single', {
+                    method: 'POST',
+                    body: formData,
+                    credentials: 'include'
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    document.getElementById('result').innerHTML = `
+                        <p style="color: green;">Upload successful!</p>
+                        <p><strong>File URL:</strong> <a href="${result.data.url}" target="_blank">${result.data.url}</a></p>
+                        <img src="${result.data.url}" alt="Uploaded image" style="max-width: 300px; border: 1px solid #ccc; margin-top: 10px;">
+                    `;
+                } else {
+                    document.getElementById('result').innerHTML = `<p style="color: red;">Upload failed: ${result.message}</p>`;
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        });
+    </script>
+</body>
+</html>
