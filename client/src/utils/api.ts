@@ -22,7 +22,7 @@ api.interceptors.request.use(
     }
     
     // CSRF Protection: Add CSRF token for state-changing requests
-    if (['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method?.toUpperCase())) {
+    if (config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
       const csrfToken = localStorage.getItem('csrfToken');
       if (csrfToken) {
         config.headers['X-CSRF-Token'] = csrfToken;
