@@ -123,16 +123,10 @@ const securityMiddleware = (req, res, next) => {
 // SECURE CORS configuration
 const corsConfig = {
   origin: function (origin, callback) {
-    // SECURITY: Only allow specified origins - block requests with no origin in production
+    // Allow requests without origin for deployment testing and direct access
     if (!origin) {
-      if (process.env.NODE_ENV === 'development') {
-        // Allow no origin only in development
-        return callback(null, true);
-      } else {
-        // Block no origin in production for security
-        console.log('CORS: Blocked request with no origin in production');
-        return callback(new Error('Not allowed by CORS - origin required in production'));
-      }
+      console.log('CORS: Allowing request with no origin');
+      return callback(null, true);
     }
     
     const allowedOrigins = [
