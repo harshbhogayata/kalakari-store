@@ -50,10 +50,8 @@ module.exports = {
         }
       },
       fontFamily: {
-        'sans': ['Manrope', 'sans-serif'],
-        'serif': ['Lora', 'serif'],
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        serif: ['Playfair Display', 'serif'],
+        sans: ['Inter', 'Manrope', 'system-ui', 'sans-serif'],
+        serif: ['Playfair Display', 'Lora', 'serif'],
       },
       backgroundImage: {
         'hero-pattern': "url('data:image/svg+xml,%3Csvg width=\"80\" height=\"80\" viewBox=\"0 0 80 80\" xmlns=\"http://www.w3.org/2000/svg\"%3E%3Cg fill=\"none\" fill-rule=\"evenodd\"%3E%3Cg fill=\"%233A2E24\" fill-opacity=\"0.03\"%3E%3Cpath d=\"M50 50c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10zM10 10c0-5.523 4.477-10 10-10s10 4.477 10 10-4.477 10-10 10-10-4.477-10-10z\"/%3E%3C/g%3E%3C/g%3E%3C/svg%3E')",

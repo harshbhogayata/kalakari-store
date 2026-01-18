@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import './PriceRangeSlider.css'; // Import external CSS
 
 interface PriceRangeSliderProps {
   minPrice: number;
@@ -48,7 +49,7 @@ const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
         <span>₹{minValue.toLocaleString()}</span>
         <span>₹{maxValue.toLocaleString()}</span>
       </div>
-      
+
       <div className="relative">
         <div className="relative h-2 bg-gray-200 rounded-lg">
           <div
@@ -59,7 +60,7 @@ const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
             }}
           />
         </div>
-        
+
         <input
           type="range"
           min={minPrice}
@@ -69,7 +70,7 @@ const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
           className="absolute top-0 w-full h-2 bg-transparent appearance-none cursor-pointer slider-thumb"
           style={{ zIndex: 2 }}
         />
-        
+
         <input
           type="range"
           min={minPrice}
@@ -80,31 +81,6 @@ const PriceRangeSlider: React.FC<PriceRangeSliderProps> = ({
           style={{ zIndex: 2 }}
         />
       </div>
-      
-      <style dangerouslySetInnerHTML={{
-        __html: `
-          .slider-thumb::-webkit-slider-thumb {
-            appearance: none;
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #3b82f6;
-            cursor: pointer;
-            border: 2px solid #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          }
-          
-          .slider-thumb::-moz-range-thumb {
-            height: 20px;
-            width: 20px;
-            border-radius: 50%;
-            background: #3b82f6;
-            cursor: pointer;
-            border: 2px solid #ffffff;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-          }
-        `
-      }} />
     </div>
   );
 };

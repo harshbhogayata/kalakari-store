@@ -6,6 +6,7 @@ class CSRFProtection {
     this.generateToken = this.generateToken.bind(this);
     this.validateToken = this.validateToken.bind(this);
     this.middleware = this.middleware.bind(this);
+    this.setTokenEndpoint = this.setTokenEndpoint.bind(this);
   }
 
   // Generate a cryptographically secure CSRF token
@@ -119,14 +120,9 @@ class CSRFProtection {
 
   // Generate and set CSRF token endpoint
   setTokenEndpoint(req, res, next) {
-    // Only for authenticated users
-    if (!req.user) {
-      return res.status(401).json({
-        success: false,
-        message: 'Authentication required to generate CSRF token'
-      });
-    }
-
+    // Allow CSRF token generation for both authenticated and unauthenticated users
+    // This is needed for registration and other public forms
+    
     const token = this.generateToken(req.session?.id);
     
     // Set token in session for server-side validation

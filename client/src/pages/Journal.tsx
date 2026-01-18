@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 
 const Journal: React.FC = () => {
   const { t } = useTranslation();
-  
+  const placeholderImage = '/images/placeholder-journal.png';
+
   const journalPosts = [
     {
       id: 1,
@@ -75,8 +76,8 @@ const Journal: React.FC = () => {
 
   const [selectedCategory, setSelectedCategory] = React.useState('All');
 
-  const filteredPosts = selectedCategory === 'All' 
-    ? journalPosts 
+  const filteredPosts = selectedCategory === 'All'
+    ? journalPosts
     : journalPosts.filter(post => post.category === selectedCategory);
 
   return (
@@ -106,7 +107,7 @@ const Journal: React.FC = () => {
                     className="w-full h-64 lg:h-full object-cover"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = 'https://placehold.co/800x600/EAE5DE/3A2E24?text=Journal';
+                      target.src = placeholderImage;
                     }}
                   />
                 </div>
@@ -128,7 +129,7 @@ const Journal: React.FC = () => {
                     to={`/journal/${post.id}`}
                     className="inline-flex items-center text-brand-clay hover:text-brand-clay-dark font-medium transition-colors"
                   >
-{t('journal.readMore')}
+                    {t('journal.readMore')}
                     <ArrowRight className="ml-2 w-4 h-4" />
                   </Link>
                 </div>
@@ -146,11 +147,10 @@ const Journal: React.FC = () => {
               <button
                 key={category}
                 onClick={() => setSelectedCategory(category)}
-                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${
-                  selectedCategory === category
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-colors ${selectedCategory === category
                     ? 'bg-brand-clay text-white'
                     : 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                }`}
+                  }`}
               >
                 {category}
               </button>
@@ -176,7 +176,7 @@ const Journal: React.FC = () => {
                     className="w-full h-48 object-cover block group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => {
                       const target = e.target as HTMLImageElement;
-                      target.src = 'https://placehold.co/600x400/EAE5DE/3A2E24?text=Journal';
+                      target.src = placeholderImage;
                     }}
                   />
                 </div>
@@ -215,14 +215,14 @@ const Journal: React.FC = () => {
           <form className="max-w-md mx-auto flex gap-4">
             <input
               type="email"
-placeholder={t('journal.newsletter.placeholder')}
+              placeholder={t('journal.newsletter.placeholder')}
               className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-gold focus:border-brand-gold"
             />
             <button
               type="submit"
               className="bg-brand-clay text-white px-6 py-3 rounded-lg hover:bg-brand-clay-dark transition-colors"
             >
-{t('journal.newsletter.button')}
+              {t('journal.newsletter.button')}
             </button>
           </form>
         </div>

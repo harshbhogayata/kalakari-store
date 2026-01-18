@@ -31,7 +31,7 @@ const Profile: React.FC = () => {
   // Update profile mutation
   const updateProfileMutation = useMutation(
     async (data: Partial<UserType>) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/auth/profile' : '/auth/profile';
+      const endpoint = '/api/auth/profile';
       const response = await api.put(endpoint, data);
       return response.data;
     },

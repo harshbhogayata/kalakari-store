@@ -1,6 +1,6 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import { Star, ShoppingCart } from 'lucide-react';
+import { Star, ShoppingCart, Eye } from 'lucide-react';
 import { Product } from '../../types';
 import WishlistButton from '../WishlistButton';
 import { useCart } from '../../contexts/CartContext';
@@ -10,7 +10,7 @@ import LazyImage from '../LazyImage';
 
 export interface ProductCardProps {
   product: Product;
-  variant?: 'featured' | 'trending' | 'related' | 'compact';
+  variant?: 'default' | 'compact';
   showRating?: boolean;
   showStats?: boolean;
   showWishlist?: boolean;
@@ -19,9 +19,13 @@ export interface ProductCardProps {
   onAddToCart?: (product: Product) => void;
 }
 
+/**
+ * Unified ProductCard Component
+ * Premium design with consistent styling across all sections
+ */
 const ProductCard: React.FC<ProductCardProps> = ({
   product,
-  variant = 'compact',
+  variant = 'default',
   showRating = true,
   showStats = false,
   showWishlist = true,
@@ -32,7 +36,10 @@ const ProductCard: React.FC<ProductCardProps> = ({
   const { addItem } = useCart();
   const { user } = useAuth();
 
-  const handleAddToCart = (product: Product) => {
+  const handleAddToCart = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+
     if (onAddToCart) {
       onAddToCart(product);
       return;
@@ -47,185 +54,176 @@ const ProductCard: React.FC<ProductCardProps> = ({
       productId: product._id,
       quantity: 1,
       price: product.price,
-      variant: product.variants && product.variants.length > 0 ? { [product.variants[0].name]: product.variants[0].options[0] } : undefined,
+      variant: product.variants && product.variants.length > 0
+        ? { [product.variants[0].name]: product.variants[0].options[0] }
+        : undefined,
     });
     toast.success(`${product.name} added to cart!`);
   };
 
-  const handleNotifyMe = () => {
+  const handleNotifyMe = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
     toast.success('We\'ll notify you when this item is back in stock!');
   };
 
   const isAvailable = (product.inventory?.available ?? 0) > 0;
 
-  // Badge configuration based on variant
-  const getBadgeConfig = () => {
-    if (variant === 'trending' && product.tags?.includes('Trending')) {
-      return { text: 'Trending', className: 'bg-red-500 text-white' };
+  // Badge configuration
+  const getBadge = () => {
+    if (!isAvailable) {
+      return { text: 'Sold Out', bg: 'bg-gray-800', textColor: 'text-white' };
     }
-    if (product.tags?.includes('Sold Out') || !isAvailable) {
-      return { text: 'Sold Out', className: 'bg-gray-700 text-white' };
+    if (product.isFeatured) {
+      return { text: 'Featured', bg: 'bg-brand-gold', textColor: 'text-brand-ink' };
     }
     if (product.tags?.includes('Bestseller')) {
-      return { text: 'Bestseller', className: 'bg-green-500 text-white' };
+      return { text: 'Bestseller', bg: 'bg-emerald-500', textColor: 'text-white' };
     }
-    if (product.discount) {
-      return { text: `-${product.discount}%`, className: 'bg-red-500 text-white' };
+    if (product.discount && product.discount > 0) {
+      return { text: `-${product.discount}%`, bg: 'bg-rose-500', textColor: 'text-white' };
     }
     return null;
   };
 
-  const badgeConfig = getBadgeConfig();
-
-  // Card styling based on variant
-  const getCardClasses = () => {
-    const baseClasses = 'bg-white rounded-lg overflow-hidden transition-all duration-300 hover:shadow-lg group';
-    
-    switch (variant) {
-      case 'featured':
-        return `${baseClasses} hover:-translate-y-1 focus-within:ring-2 focus-within:ring-brand-gold focus-within:ring-offset-4 focus-within:ring-offset-brand-base shadow-lg`;
-      case 'trending':
-        return `${baseClasses} hover:shadow-md shadow-sm`;
-      case 'related':
-        return `${baseClasses} hover:shadow-md shadow-sm`;
-      case 'compact':
-        return `${baseClasses} hover:shadow-md shadow-sm`;
-      default:
-        return baseClasses;
-    }
-  };
-
-  // Image height based on variant
-  const getImageHeight = () => {
-    switch (variant) {
-      case 'featured':
-        return 'h-80';
-      case 'trending':
-      case 'related':
-      case 'compact':
-        return 'h-48';
-      default:
-        return 'h-48';
-    }
-  };
-
-  // Button styling based on variant
-  const getButtonClasses = () => {
-    const baseClasses = 'flex-1 text-center py-2 px-3 rounded font-medium transition-colors duration-200';
-    
-    switch (variant) {
-      case 'featured':
-        return `${baseClasses} bg-brand-stone text-brand-ink hover:bg-brand-clay hover:text-white focus:outline-none focus:ring-2 focus:ring-brand-gold focus:ring-offset-2`;
-      default:
-        return `${baseClasses} bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2`;
-    }
-  };
+  const badge = getBadge();
 
   return (
-    <div className={`${getCardClasses()} ${className}`}>
-      {/* Product Image */}
-      <div className="overflow-hidden relative">
-        <Link to={`/products/${product._id}`}>
+    <div
+      className={`group relative bg-white rounded-xl overflow-hidden transition-all duration-500 
+        hover:shadow-2xl hover:-translate-y-2 
+        ${variant === 'compact' ? 'shadow-sm' : 'shadow-lg'}
+        ${className}`}
+    >
+      {/* Image Container */}
+      <Link to={`/products/${product._id}`} className="block relative overflow-hidden">
+        <div className={`relative ${variant === 'compact' ? 'aspect-square' : 'aspect-[4/5]'}`}>
           <LazyImage
-            src={product.images[0]?.url || 'https://placehold.co/600x800/EAE5DE/3A2E24?text=Image'}
+            src={product.images[0]?.url || 'https://placehold.co/600x750/EAE5DE/3A2E24?text=Product'}
             alt={product.name}
-            className={`w-full ${getImageHeight()} object-cover transition-transform duration-500 group-hover:scale-105`}
+            className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
           />
-        </Link>
-        
+
+          {/* Gradient Overlay on Hover */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
+        </div>
+
         {/* Badge */}
-        {badgeConfig && (
-          <div className={`absolute top-3 left-3 px-3 py-1 rounded-full text-sm font-medium ${badgeConfig.className}`}>
-            {badgeConfig.text}
+        {badge && (
+          <div className={`absolute top-4 left-4 px-3 py-1.5 rounded-full text-xs font-semibold tracking-wide ${badge.bg} ${badge.textColor} shadow-lg`}>
+            {badge.text}
           </div>
         )}
-      </div>
 
-      {/* Product Info */}
-      <div className="p-6">
-        {/* Product Name and Category */}
-        <div className="mb-2">
-          <h3 className="font-serif text-lg mb-1 text-gray-900">
-            <Link 
-              to={`/products/${product._id}`} 
-              className="hover:text-primary-600 transition-colors line-clamp-1"
+        {/* Quick Action Buttons - Appear on Hover */}
+        <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-4 group-hover:translate-x-0">
+          {showWishlist && (
+            <WishlistButton
+              productId={product._id}
+              className="p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-brand-clay hover:text-white transition-all duration-300"
+            />
+          )}
+          {showQuickView && (
+            <Link
+              to={`/products/${product._id}`}
+              className="p-2.5 bg-white/90 backdrop-blur-sm rounded-full shadow-lg hover:bg-brand-clay hover:text-white transition-all duration-300"
+              onClick={(e) => e.stopPropagation()}
             >
-              {product.name}
+              <Eye className="w-4 h-4" />
             </Link>
-          </h3>
-          <p className="text-sm text-gray-600 mb-1">{product.category}</p>
+          )}
         </div>
 
-        {/* Description */}
-        <p className="text-sm text-gray-500 mb-4 line-clamp-2">
-          {product.description}
-        </p>
-
-        {/* Rating */}
-        {showRating && product.rating && (
-          <div className="flex items-center mb-3">
-            <div className="flex text-yellow-400">
-              {[...Array(5)].map((_, i) => (
-                <Star
-                  key={i}
-                  className={`w-4 h-4 ${
-                    i < Math.round(product.rating!.average) ? 'fill-current' : 'text-gray-300'
-                  }`}
-                />
-              ))}
-            </div>
-            <span className="text-sm text-gray-600 ml-2">
-              {product.rating.average.toFixed(1)} ({product.rating.count})
-            </span>
-          </div>
-        )}
-
-        {/* Stats (for trending products) */}
-        {showStats && variant === 'trending' && product.stats && (
-          <div className="flex items-center justify-between text-xs text-gray-500 mb-3">
-            <span>{product.stats.views || 0} views</span>
-            <span>{product.stats.orders || 0} orders</span>
-          </div>
-        )}
-
-        {/* Price */}
-        <div className="mb-4">
-          <span className="text-xl font-bold text-primary-600">
-            ₹{product.price.toLocaleString()}
-          </span>
-        </div>
-
-        {/* Actions */}
-        <div className="flex space-x-2">
-          {/* Add to Cart / Notify Me Button */}
+        {/* Add to Cart Button - Appears at Bottom on Hover */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-500">
           {isAvailable ? (
             <button
-              onClick={() => handleAddToCart(product)}
-              className={getButtonClasses()}
+              onClick={handleAddToCart}
+              className="w-full flex items-center justify-center gap-2 py-3 px-4 bg-white/95 backdrop-blur-sm text-brand-ink font-semibold rounded-lg hover:bg-brand-clay hover:text-white transition-all duration-300 shadow-lg"
             >
-              <ShoppingCart className="w-4 h-4 mr-2 inline" />
-              {variant === 'featured' ? 'Add to Cart' : 'Add'}
+              <ShoppingCart className="w-4 h-4" />
+              Add to Cart
             </button>
           ) : (
             <button
               onClick={handleNotifyMe}
-              className={`${getButtonClasses()} bg-brand-gold text-brand-ink hover:bg-brand-clay-dark hover:text-white`}
+              className="w-full py-3 px-4 bg-brand-gold/95 backdrop-blur-sm text-brand-ink font-semibold rounded-lg hover:bg-brand-clay hover:text-white transition-all duration-300 shadow-lg"
             >
               Notify Me
             </button>
           )}
-
-          {/* Wishlist Button */}
-          {showWishlist && (
-            <WishlistButton 
-              productId={product._id}
-              className={`p-2 border border-gray-300 rounded hover:border-primary-600 hover:text-primary-600 transition-colors duration-200 ${
-                variant === 'featured' ? 'hover:border-brand-clay hover:text-brand-clay' : ''
-              }`}
-            />
-          )}
-
         </div>
+      </Link>
+
+      {/* Product Info */}
+      <div className="p-5">
+        {/* Category */}
+        <p className="text-xs font-medium text-brand-clay uppercase tracking-widest mb-2">
+          {product.category}
+        </p>
+
+        {/* Product Name */}
+        <h3 className="font-serif text-lg text-gray-900 mb-2 line-clamp-1 group-hover:text-brand-clay transition-colors">
+          <Link to={`/products/${product._id}`}>
+            {product.name}
+          </Link>
+        </h3>
+
+        {/* Description */}
+        <p className="text-sm text-gray-500 mb-3 line-clamp-2">
+          {product.description}
+        </p>
+
+        {/* Rating */}
+        {showRating && product.rating && product.rating.count > 0 && (
+          <div className="flex items-center gap-2 mb-3">
+            <div className="flex">
+              {[...Array(5)].map((_, i) => (
+                <Star
+                  key={i}
+                  className={`w-3.5 h-3.5 ${i < Math.round(product.rating!.average)
+                      ? 'text-amber-400 fill-amber-400'
+                      : 'text-gray-200'
+                    }`}
+                />
+              ))}
+            </div>
+            <span className="text-xs text-gray-500">
+              ({product.rating.count})
+            </span>
+          </div>
+        )}
+
+        {/* Stats - Optional */}
+        {showStats && product.stats && (
+          <div className="flex items-center gap-4 text-xs text-gray-400 mb-3">
+            <span>{product.stats.views || 0} views</span>
+            <span>•</span>
+            <span>{product.stats.orders || 0} sold</span>
+          </div>
+        )}
+
+        {/* Price */}
+        <div className="flex items-center gap-2">
+          <span className="text-xl font-bold text-gray-900">
+            ₹{product.price.toLocaleString()}
+          </span>
+          {product.originalPrice && product.originalPrice > product.price && (
+            <span className="text-sm text-gray-400 line-through">
+              ₹{product.originalPrice.toLocaleString()}
+            </span>
+          )}
+        </div>
+
+        {/* Stock Status */}
+        {!isAvailable && (
+          <p className="text-xs text-rose-500 font-medium mt-2">Out of Stock</p>
+        )}
+        {isAvailable && product.inventory?.available && product.inventory.available <= 5 && (
+          <p className="text-xs text-amber-600 font-medium mt-2">
+            Only {product.inventory.available} left!
+          </p>
+        )}
       </div>
     </div>
   );

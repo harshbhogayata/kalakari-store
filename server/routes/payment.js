@@ -1,10 +1,22 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const rateLimit = require('express-rate-limit');
 const Razorpay = require('razorpay');
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 const { protect, authorize } = require('../middleware/auth');
+const { csrfProtection } = require('../middleware/csrfProtection');
 const router = express.Router();
+
+// Rate limiting for payment endpoints
+const paymentLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 5, // limit each IP to 5 requests per windowMs
+  message: {
+    success: false,
+    message: 'Too many payment attempts, please try again later.'
+  }
+});
 
 // Initialize Razorpay - SECURE: NO FALLBACK SECRETS
 const razorpay = new Razorpay({
@@ -18,7 +30,7 @@ if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_SECRET) {
 }
 
 // Create order - PROTECTED (Customer only)
-router.post('/create-order', protect, authorize('customer'), [
+router.post('/create-order', paymentLimiter, csrfProtection, protect, authorize('customer'), [
   body('amount').isNumeric().isFloat({ min: 1 }).withMessage('Amount must be at least ₹1'),
   body('currency').optional().isIn(['INR']).withMessage('Only INR currency is supported'),
   body('receipt').optional().trim().isLength({ max: 50 }).withMessage('Receipt ID too long')
@@ -83,7 +95,7 @@ router.post('/create-order', protect, authorize('customer'), [
 });
 
 // Verify payment - PROTECTED (Customer only)
-router.post('/verify', protect, authorize('customer'), [
+router.post('/verify', paymentLimiter, csrfProtection, protect, authorize('customer'), [
   body('orderId').notEmpty().withMessage('Order ID is required'),
   body('paymentId').notEmpty().withMessage('Payment ID is required'),
   body('signature').notEmpty().withMessage('Signature is required')
@@ -108,7 +120,35 @@ router.post('/verify', protect, authorize('customer'), [
       .digest('hex');
 
     if (expectedSignature === signature) {
-      // Payment verified successfully
+      // Payment verified successfully - update order status
+      const order = await Order.findOne({ orderId });
+      if (order) {
+        await Order.findByIdAndUpdate(order._id, {
+          $set: {
+            'payment.status': 'completed',
+            'payment.razorpayPaymentId': paymentId,
+            'payment.razorpayOrderId': orderId,
+            'payment.verifiedAt': new Date(),
+            status: 'confirmed'
+          }
+        });
+
+        // Move inventory from reserved to sold
+        for (const item of order.items) {
+          await Product.findByIdAndUpdate(item.productId, {
+            $inc: {
+              'inventory.reserved': -item.quantity,
+              'inventory.sold': item.quantity
+            }
+          });
+        }
+
+        // TODO: Send confirmation email to customer
+        // TODO: Notify artisans about new order
+        
+        console.log(`✅ Payment verified for order ${order._id}`);
+      }
+
       res.json({
         success: true,
         message: 'Payment verified successfully',
@@ -119,9 +159,34 @@ router.post('/verify', protect, authorize('customer'), [
         }
       });
     } else {
+      // Payment verification failed - rollback inventory
+      const order = await Order.findOne({ orderId });
+      if (order) {
+        // Rollback inventory reservation
+        for (const item of order.items) {
+          await Product.findByIdAndUpdate(item.productId, {
+            $inc: {
+              'inventory.available': item.quantity,
+              'inventory.reserved': -item.quantity
+            }
+          });
+        }
+
+        // Update order status to failed
+        await Order.findByIdAndUpdate(order._id, {
+          $set: {
+            'payment.status': 'failed',
+            'payment.failureReason': 'Signature verification failed',
+            status: 'cancelled'
+          }
+        });
+      }
+
+      console.error(`❌ Payment verification failed for order: ${orderId}`);
       res.status(400).json({
         success: false,
-        message: 'Payment verification failed'
+        message: 'Payment verification failed',
+        code: 'PAYMENT_VERIFICATION_FAILED'
       });
     }
   } catch (error) {
@@ -130,6 +195,121 @@ router.post('/verify', protect, authorize('customer'), [
       success: false,
       message: 'Payment verification failed',
       error: error.message
+    });
+  }
+});
+
+// Get order payment status - PROTECTED
+router.get('/status/:orderId', protect, async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    
+    const order = await Order.findOne({ orderId });
+    
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Verify user owns this order
+    if (order.userId.toString() !== req.user._id.toString() && req.user.role !== 'admin') {
+      return res.status(403).json({
+        success: false,
+        message: 'Unauthorized access to order'
+      });
+    }
+
+    res.json({
+      success: true,
+      data: {
+        orderId: order.orderId,
+        status: order.status,
+        paymentStatus: order.payment.status,
+        amount: order.totalAmount,
+        paymentMethod: order.payment.method,
+        verifiedAt: order.payment.verifiedAt,
+        failureReason: order.payment.failureReason
+      }
+    });
+  } catch (error) {
+    console.error('Get payment status error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to fetch payment status',
+      error: error.message
+    });
+  }
+});
+
+// Retry payment verification - PROTECTED (for failed payments)
+router.post('/retry/:orderId', protect, authorize('customer'), async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const { paymentId, signature } = req.body;
+
+    if (!paymentId || !signature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment ID and signature are required'
+      });
+    }
+
+    const order = await Order.findOne({ orderId });
+
+    if (!order) {
+      return res.status(404).json({
+        success: false,
+        message: 'Order not found'
+      });
+    }
+
+    // Only allow retry for failed or pending payments
+    if (!['failed', 'pending'].includes(order.payment.status)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Payment cannot be retried',
+        code: 'PAYMENT_RETRY_NOT_ALLOWED'
+      });
+    }
+
+    // Verify signature
+    const crypto = require('crypto');
+    const expectedSignature = crypto
+      .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+      .update(`${orderId}|${paymentId}`)
+      .digest('hex');
+
+    if (expectedSignature !== signature) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid payment signature'
+      });
+    }
+
+    // Mark as verified
+    await Order.findByIdAndUpdate(order._id, {
+      $set: {
+        'payment.status': 'completed',
+        'payment.razorpayPaymentId': paymentId,
+        'payment.razorpayOrderId': orderId,
+        'payment.verifiedAt': new Date(),
+        status: 'confirmed'
+      }
+    });
+
+    res.json({
+      success: true,
+      message: 'Payment verified successfully',
+      data: { orderId, paymentId, verified: true }
+    });
+
+  } catch (error) {
+    console.error('Payment retry error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Payment retry failed'
     });
   }
 });
@@ -156,10 +336,11 @@ router.get('/payment/:paymentId', protect, async (req, res) => {
 });
 
 // Webhook endpoint for Razorpay
-router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) => {
+router.post('/webhook', express.raw({ type: 'application/json' }), async (req, res) => {
   try {
     const crypto = require('crypto');
     const signature = req.headers['x-razorpay-signature'];
+    const webhookSecret = process.env.RAZORPAY_WEBHOOK_SECRET;
     
     if (!signature) {
       return res.status(400).json({
@@ -168,13 +349,22 @@ router.post('/webhook', express.raw({ type: 'application/json' }), (req, res) =>
       });
     }
 
-    // Verify webhook signature - SECURE: NO FALLBACK SECRET
+    if (!webhookSecret) {
+      console.error('RAZORPAY_WEBHOOK_SECRET not configured');
+      return res.status(500).json({
+        success: false,
+        message: 'Webhook secret not configured'
+      });
+    }
+
+    // Verify webhook signature
     const expectedSignature = crypto
-      .createHmac('sha256', process.env.RAZORPAY_WEBHOOK_SECRET)
+      .createHmac('sha256', webhookSecret)
       .update(req.body)
       .digest('hex');
 
     if (signature !== expectedSignature) {
+      console.error('Invalid webhook signature');
       return res.status(400).json({
         success: false,
         message: 'Invalid signature'

@@ -21,7 +21,7 @@ const Addresses: React.FC = () => {
   const { data: addressesData, isLoading, error, refetch } = useQuery(
     ['addresses'],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/addresses' : '/addresses';
+      const endpoint = '/api/addresses';
       const response = await api.get(endpoint);
       return response.data.data.addresses || [];
     },
@@ -36,7 +36,7 @@ const Addresses: React.FC = () => {
   // Create/Update address mutation
   const saveAddressMutation = useMutation(
     async (data: AddressFormData) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/addresses' : '/addresses';
+      const endpoint = '/api/addresses';
       
       if (editingAddress) {
         const response = await api.put(`${endpoint}/${editingAddress._id}`, data);
@@ -62,7 +62,7 @@ const Addresses: React.FC = () => {
   // Delete address mutation
   const deleteAddressMutation = useMutation(
     async (addressId: string) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/addresses' : '/addresses';
+      const endpoint = '/api/addresses';
       const response = await api.delete(`${endpoint}/${addressId}`);
       return response.data;
     },
@@ -80,7 +80,7 @@ const Addresses: React.FC = () => {
   // Set default address mutation
   const setDefaultMutation = useMutation(
     async (addressId: string) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/addresses' : '/addresses';
+      const endpoint = '/api/addresses';
       const response = await api.patch(`${endpoint}/${addressId}/default`);
       return response.data;
     },

@@ -44,7 +44,7 @@ exports.getTokenFromCookie = (req) => {
   }
   
   // Prefer httpOnly cookies in production
-  return req.cookies.accessToken || req.cookies.refreshToken;
+  return req.cookies?.accessToken || req.cookies?.refreshToken;
 };
 
 module.exports = exports;

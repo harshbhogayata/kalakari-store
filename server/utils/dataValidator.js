@@ -11,7 +11,7 @@ const validateMockData = () => {
   const validateUsers = () => {
     const requiredUserFields = ['_id', 'name', 'email', 'phone', 'password', 'role'];
     const validRoles = ['customer', 'artisan', 'admin'];
-    
+
     mockUsers.forEach((user, index) => {
       // Check required fields
       requiredUserFields.forEach(field => {
@@ -52,10 +52,10 @@ const validateMockData = () => {
     const products = mockComprehensiveProducts();
     const requiredProductFields = ['_id', 'name', 'description', 'category', 'price', 'artisanId'];
     const validCategories = [
-      'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork', 
+      'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork',
       'Leather', 'Bamboo', 'Stone', 'Glass', 'Paper', 'Home Decor',
       'Kitchenware', 'Accessories', 'Clothing', 'Footwear', 'Other',
-      'Diwali Collection', 'Festive Decor', 'Traditional Crafts', 'Paintings'
+      'Home Decor', 'Kitchenware', 'Accessories', 'Clothing', 'Footwear', 'Other', 'Festive Decor', 'Traditional Crafts', 'Paintings'
     ];
 
     products.forEach((product, index) => {
@@ -106,7 +106,7 @@ const validateMockData = () => {
   const validateOrders = () => {
     Object.keys(mockOrders).forEach(userId => {
       const userOrders = mockOrders[userId];
-      
+
       // Validate user exists
       if (!mockUsers.find(u => u._id === userId)) {
         errors.push(`Orders for user '${userId}' but user not found in mockUsers`);
@@ -115,7 +115,7 @@ const validateMockData = () => {
 
       userOrders.forEach((order, index) => {
         const requiredOrderFields = ['orderId', 'customerId', 'items', 'shippingAddress', 'payment'];
-        
+
         requiredOrderFields.forEach(field => {
           if (!order[field]) {
             errors.push(`Order ${index} for user ${userId}: Missing required field '${field}'`);
@@ -153,7 +153,7 @@ const validateMockData = () => {
   const validateAddresses = () => {
     Object.keys(mockAddresses).forEach(userId => {
       const userAddresses = mockAddresses[userId];
-      
+
       // Validate user exists
       if (!mockUsers.find(u => u._id === userId)) {
         errors.push(`Addresses for user '${userId}' but user not found in mockUsers`);
@@ -162,7 +162,7 @@ const validateMockData = () => {
 
       userAddresses.forEach((address, index) => {
         const requiredAddressFields = ['name', 'street', 'city', 'state', 'pincode', 'phone'];
-        
+
         requiredAddressFields.forEach(field => {
           if (!address[field]) {
             errors.push(`Address ${index} for user ${userId}: Missing required field '${field}'`);

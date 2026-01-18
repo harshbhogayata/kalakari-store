@@ -101,7 +101,7 @@ describe('AuthContext', () => {
     });
 
     await waitFor(() => {
-      expect(mockApi.post).toHaveBeenCalledWith('/api/dev/auth/login', {
+      expect(mockApi.post).toHaveBeenCalledWith('/api/auth/login', {
         email: 'test@example.com',
         password: 'password',
       });

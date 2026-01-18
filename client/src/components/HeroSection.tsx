@@ -9,7 +9,7 @@ const HeroSection: React.FC = () => {
   useEffect(() => {
     const img = new Image();
     img.onload = () => setBackgroundLoaded(true);
-    img.src = 'https://media.istockphoto.com/id/1453245838/photo/skilled-craftsman-working-manually-a-detailed-bamboo-wood-armchair-with-his-fingers-and-tools.jpg?s=1024x1024&w=is&k=20&c=vM08wPXTdTpCJ1S0YmAQsAJo-k3Lwy5U-JU6NXxItBk=';
+    img.src = '/images/hero/craftsman.png';
   }, []);
 
   return (
@@ -19,7 +19,7 @@ const HeroSection: React.FC = () => {
       }`}
       style={{
         backgroundImage: backgroundLoaded 
-          ? `linear-gradient(to top, rgba(58, 46, 36, 0.6), rgba(58, 46, 36, 0.2)), url('https://media.istockphoto.com/id/1453245838/photo/skilled-craftsman-working-manually-a-detailed-bamboo-wood-armchair-with-his-fingers-and-tools.jpg?s=1024x1024&w=is&k=20&c=vM08wPXTdTpCJ1S0YmAQsAJo-k3Lwy5U-JU6NXxItBk=')`
+          ? `linear-gradient(to top, rgba(58, 46, 36, 0.6), rgba(58, 46, 36, 0.2)), url('/images/hero/craftsman.png')`
           : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',

@@ -18,7 +18,7 @@ const AdminArtisans: React.FC = () => {
       if (craftTypeFilter) params.append('craftType', craftTypeFilter);
       if (stateFilter) params.append('state', stateFilter);
       
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/admin/artisans' : '/admin/artisans';
+      const endpoint = '/api/admin/artisans';
       const response = await api.get(`${endpoint}?${params.toString()}`);
       return response.data.data;
     }

@@ -58,7 +58,7 @@ const ProductForm: React.FC = () => {
   const { data: productData, isLoading: isLoadingProduct } = useQuery(
     ['product', id],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
+      const endpoint = '/api/products';
       const response = await api.get(`${endpoint}/${id}`);
       return response.data.data.product || response.data.data;
     },
@@ -91,7 +91,7 @@ const ProductForm: React.FC = () => {
   // Create/Update product mutation
   const saveProductMutation = useMutation(
     async (data: ProductFormData) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
+      const endpoint = '/api/products';
       
       const formData = new FormData();
       formData.append('name', data.name);

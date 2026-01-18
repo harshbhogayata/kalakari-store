@@ -4,33 +4,33 @@ import { useTranslation } from 'react-i18next';
 
 const JournalSection: React.FC = () => {
   const { t } = useTranslation();
-  
+
   const journalPosts = [
     {
       title: 'The Ancient Art of Block Printing',
       category: 'TEXTILES',
       description: 'Explore the history and intricate process behind one of India\'s most beloved textile traditions.',
-      image: 'https://images.unsplash.com/photo-1600661633315-7389108b31a1?q=80&w=1887&auto=format&fit=crop',
+      image: '/images/journal/block_printing.png',
       delay: '0ms'
     },
     {
       title: 'A Day with the Meenakari Masters',
       category: 'BEHIND THE CRAFT',
       description: 'We sit down with a family that has been practicing the art of enamel jewelry for five generations.',
-      image: 'https://images.unsplash.com/photo-1599408226244-5d0718ac8e99?q=80&w=1887&auto=format&fit=crop',
+      image: '/images/journal/meenakari.png',
       delay: '200ms'
     },
     {
       title: 'Pichwai: The Divine Paintings of Nathdwara',
       category: 'ART FORM',
       description: 'Discover the spiritual significance and detailed artistry of these stunning cloth paintings.',
-      image: 'https://images.unsplash.com/photo-1621213327315-b74549071b78?q=80&w=1964&auto=format&fit=crop',
+      image: '/images/journal/pichwai.png',
       delay: '400ms'
     }
   ];
 
   return (
-    <section id="journal" className="py-28">
+    <section id="journal" className="py-16">
       <div className="container mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-5xl font-serif mb-4 animate-reveal">{t('home.journal.title')}</h2>
@@ -75,7 +75,7 @@ const JournalSection: React.FC = () => {
             to="/journal"
             className="inline-block px-10 py-3 rounded-md font-medium text-center transition-all duration-300 ease-in-out bg-brand-clay text-white shadow-lg hover:bg-brand-clay-dark hover:shadow-xl hover:-translate-y-0.5"
           >
-{t('home.journal.readMore')}
+            {t('home.journal.readMore')}
           </Link>
         </div>
       </div>

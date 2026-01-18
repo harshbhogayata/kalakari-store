@@ -35,7 +35,7 @@ const ProductDetail: React.FC = () => {
     ['product', id],
     async () => {
       // Use mock endpoint in development mode
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
+      const endpoint = '/api/products';
       const response = await axios.get(`${endpoint}/${id}`);
       return response.data.data.product || response.data.data;
     },

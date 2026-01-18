@@ -1,5 +1,6 @@
 const express = require('express');
 const { body, validationResult } = require('express-validator');
+const mongoose = require('mongoose');
 const Product = require('../models/Product');
 const Artisan = require('../models/Artisan');
 const { protect, authorize, optionalAuth } = require('../middleware/auth');
@@ -70,7 +71,7 @@ router.post('/', protect, authorize('artisan'), [
 router.get('/artisan/my-products', protect, authorize('artisan'), async (req, res) => {
   try {
     const { page = 1, limit = 12, status } = req.query;
-    
+
     // Get artisan profile
     const artisan = await Artisan.findOne({ userId: req.user._id });
     if (!artisan) {
@@ -119,60 +120,63 @@ router.get('/artisan/my-products', protect, authorize('artisan'), async (req, re
 // @access  Public
 router.get('/', optionalAuth, async (req, res) => {
   try {
-    const { 
-      category, 
-      artisanId, 
-      minPrice, 
-      maxPrice, 
-      search, 
+    const {
+      category,
+      artisanId,
+      minPrice,
+      maxPrice,
+      search,
       state,
       minRating,
       materials,
       colors,
       inStock,
       featured,
-      page = 1, 
+      page = 1,
       limit = 12,
       sort = 'createdAt',
       order = 'desc'
     } = req.query;
 
     const query = { isActive: true, isApproved: true };
-    
+
     // Basic filters
-    if (category) query.category = category;
+    if (category) {
+      const categoryArray = Array.isArray(category) ? category : category.split(',');
+      query.category = { $in: categoryArray };
+    }
     if (artisanId) query.artisanId = artisanId;
     if (featured === 'true') query.isFeatured = true;
-    
+
     // Price range
     if (minPrice || maxPrice) {
       query.price = {};
       if (minPrice) query.price.$gte = parseFloat(minPrice);
       if (maxPrice) query.price.$lte = parseFloat(maxPrice);
     }
-    
+
     // Stock filter
     if (inStock === 'true') {
       query['inventory.available'] = { $gt: 0 };
     }
-    
+
     // Rating filter
     if (minRating) {
       query['rating.average'] = { $gte: parseFloat(minRating) };
     }
-    
+
     // Materials filter
     if (materials) {
       const materialArray = Array.isArray(materials) ? materials : materials.split(',');
       query.materials = { $in: materialArray };
     }
-    
+
     // Colors filter
     if (colors) {
       const colorArray = Array.isArray(colors) ? colors : colors.split(',');
       query.colors = { $in: colorArray };
     }
-    
+
     // Text search
     if (search) {
       query.$or = [
@@ -187,7 +191,7 @@ router.get('/', optionalAuth, async (req, res) => {
     sortObj[sort] = sortOrder;
 
     let productsQuery = Product.find(query);
-    
+
     // Add state filter to populated artisan
     if (state) {
       productsQuery = productsQuery.populate({
@@ -198,12 +202,12 @@ router.get('/', optionalAuth, async (req, res) => {
     } else {
       productsQuery = productsQuery.populate('artisanId', 'businessName state city craftType');
     }
-    
+
     const products = await productsQuery
       .sort(sortObj)
       .limit(limit * 1)
       .skip((page - 1) * limit);
-    
+
     // Filter out products with null artisanId (when state filter doesn't match)
     const filteredProducts = products.filter(product => product.artisanId !== null);
 
@@ -234,18 +238,32 @@ router.get('/', optionalAuth, async (req, res) => {
 // @access  Public
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
-    const product = await Product.findById(req.params.id)
+    const { id } = req.params;
+
+    // Validate MongoDB ObjectId format
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({
+        success: false,
+        message: 'Invalid product ID format',
+        code: 'INVALID_PRODUCT_ID',
+        productId: id
+      });
+    }
+
+    const product = await Product.findById(id)
       .populate('artisanId', 'businessName state city craftType description profileImage rating');
 
     if (!product || !product.isActive || !product.isApproved) {
       return res.status(404).json({
         success: false,
-        message: 'Product not found'
+        message: 'Product not found',
+        code: 'PRODUCT_NOT_FOUND',
+        productId: id
       });
     }
 
     // Increment view count
-    await Product.findByIdAndUpdate(req.params.id, { $inc: { 'stats.views': 1 } });
+    await Product.findByIdAndUpdate(id, { $inc: { 'stats.views': 1 } });
 
     res.json({
       success: true,
@@ -266,7 +284,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
 router.get('/artisan/my-products', protect, authorize('artisan'), async (req, res) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
-    
+
     // Get artisan profile
     const artisan = await Artisan.findOne({ userId: req.user._id });
     if (!artisan) {
@@ -277,7 +295,7 @@ router.get('/artisan/my-products', protect, authorize('artisan'), async (req, re
     }
 
     const query = { artisanId: artisan._id };
-    
+
     if (status === 'active') {
       query.isActive = true;
       query.isApproved = true;
@@ -475,6 +493,123 @@ router.get('/category/:category', async (req, res) => {
     });
   } catch (error) {
     console.error('Get products by category error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Search products with suggestions
+// @route   GET /api/products/search
+// @access  Public
+router.get('/search', optionalAuth, async (req, res) => {
+  try {
+    const { q: query, limit = 10 } = req.query;
+
+    if (!query || query.trim().length < 2) {
+      return res.json({
+        success: true,
+        data: {
+          products: [],
+          suggestions: []
+        }
+      });
+    }
+
+    const searchRegex = new RegExp(query.trim(), 'i');
+
+    // Search products
+    const products = await Product.find({
+      $and: [
+        { isActive: true, isApproved: true },
+        {
+          $or: [
+            { name: searchRegex },
+            { description: searchRegex },
+            { category: searchRegex },
+            { materials: searchRegex },
+            { tags: searchRegex }
+          ]
+        }
+      ]
+    })
+      .populate('artisanId', 'businessName state city')
+      .limit(parseInt(limit));
+
+    // Get search suggestions (categories, materials, etc.)
+    const categories = await Product.distinct('category', {
+      category: searchRegex,
+      isActive: true,
+      isApproved: true
+    });
+
+    const materials = await Product.distinct('materials', {
+      materials: searchRegex,
+      isActive: true,
+      isApproved: true
+    });
+
+    const suggestions = [
+      ...categories.map(cat => ({ type: 'category', value: cat })),
+      ...materials.map(mat => ({ type: 'material', value: mat }))
+    ].slice(0, 5);
+
+    res.json({
+      success: true,
+      data: {
+        products,
+        suggestions
+      }
+    });
+  } catch (error) {
+    console.error('Search products error:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Server error'
+    });
+  }
+});
+
+// @desc    Get filter options
+// @route   GET /api/products/filters
+// @access  Public
+router.get('/filters', optionalAuth, async (req, res) => {
+  try {
+    // Get unique categories
+    const categories = await Product.distinct('category', {
+      isActive: true,
+      isApproved: true
+    });
+
+    // Get unique materials
+    const materials = await Product.aggregate([
+      { $match: { isActive: true, isApproved: true, materials: { $exists: true } } },
+      { $unwind: '$materials' },
+      { $group: { _id: '$materials' } },
+      { $sort: { _id: 1 } },
+      { $limit: 20 }
+    ]);
+
+    // Get unique colors
+    const colors = await Product.aggregate([
+      { $match: { isActive: true, isApproved: true, colors: { $exists: true } } },
+      { $unwind: '$colors' },
+      { $group: { _id: '$colors' } },
+      { $sort: { _id: 1 } },
+      { $limit: 20 }
+    ]);
+
+    res.json({
+      success: true,
+      data: {
+        categories: categories.sort(),
+        materials: materials.map(m => m._id),
+        colors: colors.map(c => c._id)
+      }
+    });
+  } catch (error) {
+    console.error('Get filter options error:', error);
     res.status(500).json({
       success: false,
       message: 'Server error'

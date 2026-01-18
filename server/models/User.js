@@ -13,7 +13,7 @@ const userSchema = new mongoose.Schema({
     required: [true, 'Email is required'],
     unique: true,
     lowercase: true,
-    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,3})+$/, 'Please enter a valid email']
+    match: [/^\w+([.-]?\w+)*@\w+([.-]?\w+)*(\.\w{2,})+$/, 'Please enter a valid email']
   },
   password: {
     type: String,
@@ -35,6 +35,47 @@ const userSchema = new mongoose.Schema({
     type: Boolean,
     default: true
   },
+  resetPasswordToken: {
+    type: String,
+    select: false
+  },
+  resetPasswordExpiry: {
+    type: Date,
+    select: false
+  },
+  resetPasswordOTP: {
+    type: String,
+    select: false
+  },
+  resetPasswordOTPExpiry: {
+    type: Date,
+    select: false
+  },
+  phoneVerified: {
+    type: Boolean,
+    default: false
+  },
+  cart: [{
+    productId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Product',
+      required: true
+    },
+    quantity: {
+      type: Number,
+      required: true,
+      min: 1
+    },
+    variant: {
+      type: Map,
+      of: String,
+      default: {}
+    },
+    addedAt: {
+      type: Date,
+      default: Date.now
+    }
+  }],
   addresses: [{
     name: {
       type: String,

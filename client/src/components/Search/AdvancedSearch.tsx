@@ -52,19 +52,17 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
   const [suggestions, setSuggestions] = useState<string[]>([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Mock data for filters
+  // Static filter data for now
   const categories = [
-    'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork', 
-    'Paintings', 'Sculptures', 'Basketry', 'Leatherwork', 'Ceramics'
+    'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork',
+    'Paintings', 'Sculptures', 'Glass', 'Leather', 'Bamboo'
   ];
-
   const materials = [
-    'Clay', 'Wood', 'Metal', 'Fabric', 'Stone', 'Glass', 
-    'Leather', 'Bamboo', 'Paper', 'Ceramic', 'Brass', 'Copper'
+    'Clay', 'Wood', 'Metal', 'Fabric', 'Stone', 'Glass',
+    'Cotton', 'Silk', 'Gold', 'Silver', 'Brass', 'Bamboo'
   ];
-
   const colors = [
-    'Red', 'Blue', 'Green', 'Yellow', 'Black', 'White', 
+    'Red', 'Blue', 'Green', 'Yellow', 'Black', 'White',
     'Brown', 'Orange', 'Purple', 'Pink', 'Gold', 'Silver'
   ];
 
@@ -251,7 +249,7 @@ const AdvancedSearch: React.FC<AdvancedSearchProps> = ({
                 className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500 focus:border-transparent"
               >
                 <option value="">All Categories</option>
-                {categories.map(category => (
+                {categories.map((category: string) => (
                   <option key={category} value={category}>{category}</option>
                 ))}
               </select>
@@ -307,7 +305,7 @@ placeholder={t('products.max')}
                 Materials
               </label>
               <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
-                {materials.map(material => (
+                {materials.map((material: string) => (
                   <label key={material} className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"
@@ -327,7 +325,7 @@ placeholder={t('products.max')}
                 Colors
               </label>
               <div className="max-h-32 overflow-y-auto border border-gray-300 rounded-md p-2">
-                {colors.map(color => (
+                {colors.map((color: string) => (
                   <label key={color} className="flex items-center space-x-2 py-1">
                     <input
                       type="checkbox"

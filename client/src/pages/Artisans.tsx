@@ -18,7 +18,7 @@ const Artisans: React.FC = () => {
       if (filters.craftType) params.append('craftType', filters.craftType);
       if (filters.state) params.append('state', filters.state);
       
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/artisans' : '/artisans';
+      const endpoint = '/api/artisans';
       const response = await api.get(`${endpoint}?${params.toString()}`);
       return response.data.data;
     }

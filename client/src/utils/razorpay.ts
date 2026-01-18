@@ -44,7 +44,7 @@ export const loadRazorpayScript = (): Promise<boolean> => {
 
 export const createRazorpayOrder = async (amount: number, receipt?: string) => {
   try {
-    const response = await fetch('/api/dev/payments/create-order', {
+    const response = await fetch('/api/payment/create-order', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -70,7 +70,7 @@ export const createRazorpayOrder = async (amount: number, receipt?: string) => {
 
 export const verifyPayment = async (orderId: string, paymentId: string, signature: string) => {
   try {
-    const response = await fetch('/api/dev/payments/verify', {
+    const response = await fetch('/api/payment/verify', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

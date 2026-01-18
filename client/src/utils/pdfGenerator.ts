@@ -317,7 +317,7 @@ export const generateOrderConfirmationPDF = (invoiceData: InvoiceData): void => 
 export const downloadOrderInvoice = async (orderId: string): Promise<void> => {
   try {
     // Fetch order details
-    const response = await fetch(`/api/dev/orders/${orderId}`);
+    const response = await fetch(`/api/orders/${orderId}`);
     const data = await response.json();
     
     if (data.success && data.data) {

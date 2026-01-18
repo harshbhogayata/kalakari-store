@@ -1,6 +1,7 @@
 import axios, { AxiosResponse } from 'axios';
 import { ApiResponse } from '../types';
 import config from '../config/env';
+import logger from './logger';
 
 // Create axios instance
 const api = axios.create({
@@ -8,6 +9,9 @@ const api = axios.create({
   timeout: config.api.timeout,
   withCredentials: true,
 });
+
+// Debug: Log the base URL (development only - handled by logger)
+logger.log('API Base URL:', config.api.baseUrl);
 
 // SECURITY UPDATE: Tokens now stored in httpOnly cookies + CSRF protection
 // Request interceptor updated to work with cookies and CSRF
@@ -20,7 +24,7 @@ api.interceptors.request.use(
         config.headers.Authorization = `Bearer ${token}`;
       }
     }
-    
+
     // CSRF Protection: Add CSRF token for state-changing requests
     if (config.method && ['POST', 'PUT', 'DELETE', 'PATCH'].includes(config.method.toUpperCase())) {
       const csrfToken = localStorage.getItem('csrfToken');
@@ -28,7 +32,7 @@ api.interceptors.request.use(
         config.headers['X-CSRF-Token'] = csrfToken;
       }
     }
-    
+
     // In production, tokens are automatically sent via httpOnly cookies
     return config;
   },
@@ -48,8 +52,8 @@ api.interceptors.response.use(
       if (process.env.NODE_ENV === 'development') {
         localStorage.removeItem('token'); // Development fallback
       }
-      // Redirect to login - server will clear httpOnly cookies automatically
-      window.location.href = '/login';
+      // Don't redirect automatically - let components handle authentication state
+      logger.log('Authentication failed - user needs to login');
     }
     return Promise.reject(error);
   }

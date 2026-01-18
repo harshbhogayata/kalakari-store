@@ -83,13 +83,8 @@ const optionalAuth = async (req, res, next) => {
   try {
     let token;
 
-    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
-      token = req.headers.authorization.split(' ')[1];
-    }
-
-    if (!token && req.cookies && req.cookies.token) {
-      token = req.cookies.token;
-    }
+    // SECURE: Use same token extraction method as protect middleware
+    token = getTokenFromCookie(req);
 
     if (token) {
       try {

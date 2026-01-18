@@ -1,288 +1,181 @@
 import React from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Tag, Share2, Heart, BookOpen } from 'lucide-react';
-// import { useTranslation } from 'react-i18next'; // TODO: Implement translations
+import { useQuery } from 'react-query';
+import DOMPurify from 'dompurify';
+import api from '../utils/api';
+
+interface JournalPost {
+  _id: string;
+  title: string;
+  excerpt: string;
+  content: string;
+  author: string;
+  publishedAt: string;
+  category: string;
+  tags: string[];
+  featuredImage: string;
+  readTime: string;
+}
 
 const JournalDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  // const { t } = useTranslation(); // TODO: Implement translations
 
-  // Mock journal post data - in a real app, this would come from an API
-  const journalPosts = [
-    {
-      id: '1',
-      title: 'The Ancient Art of Block Printing',
-      excerpt: 'Explore the history and intricate process behind one of India\'s most beloved textile traditions.',
-      content: `Block printing is one of India's oldest and most beloved textile traditions, dating back over 2,000 years. This intricate art form combines creativity, craftsmanship, and cultural heritage in a way that continues to captivate artisans and admirers alike.
-
-## The Origins of Block Printing
-
-The art of block printing in India can be traced back to the Indus Valley Civilization, where evidence of textile printing has been found. However, it was during the Mughal period that block printing truly flourished, with royal patronage helping to refine and perfect the techniques that are still used today.
-
-## The Process
-
-The block printing process is both an art and a science, requiring precision, patience, and a deep understanding of natural dyes and fabrics.
-
-### 1. Wood Block Creation
-Artisans carve intricate designs into wooden blocks, typically made from teak or sheesham wood. Each block is carefully crafted to create specific patterns, and a single design may require multiple blocks for different colors.
-
-### 2. Fabric Preparation
-The fabric, usually cotton or silk, is washed and treated to remove any impurities. It's then stretched on printing tables and secured with pins to ensure it remains taut during the printing process.
-
-### 3. Dye Application
-Natural dyes are prepared using traditional recipes passed down through generations. Common colors include indigo (blue), madder (red), turmeric (yellow), and pomegranate (black).
-
-### 4. Printing Process
-The artisan dips the wooden block into the dye and presses it onto the fabric with precision. This process is repeated across the entire length of fabric, creating seamless patterns.
-
-## Regional Variations
-
-Different regions of India have developed their own distinctive styles of block printing:
-
-- **Rajasthan**: Known for bold, geometric patterns and vibrant colors
-- **Gujarat**: Famous for intricate floral motifs and fine detailing
-- **West Bengal**: Renowned for its delicate patterns and pastel colors
-- **Andhra Pradesh**: Celebrated for its traditional Kalamkari techniques
-
-## The Artisan's Story
-
-Meet Rajesh Kumar, a third-generation block printer from Bagru, Rajasthan. His family has been practicing this art for over 60 years, and he continues to preserve the traditional techniques while adapting to modern demands.
-
-"Block printing is not just a craft," says Rajesh, "it's a way of life. Every piece tells a story, and every pattern carries the wisdom of our ancestors."
-
-## Preserving the Tradition
-
-Today, organizations and cooperatives are working to preserve this ancient art form by:
-- Supporting artisan communities
-- Providing training in traditional techniques
-- Creating market access for handmade products
-- Promoting sustainable and eco-friendly practices
-
-## Modern Applications
-
-While block printing remains deeply rooted in tradition, contemporary designers are finding new ways to incorporate these techniques into modern fashion and home décor, ensuring that this beautiful art form continues to evolve and thrive.
-
-The ancient art of block printing represents more than just a textile technique—it's a living testament to India's rich cultural heritage and the enduring power of human creativity.`,
-      image: 'https://images.unsplash.com/photo-1600661633315-7389108b31a1?q=80&w=1887&auto=format&fit=crop',
-      category: 'TEXTILES',
-      date: '2024-01-15',
-      readTime: '5 min read',
-      author: 'Priya Sharma',
-      tags: ['Block Printing', 'Textiles', 'Traditional Crafts', 'Rajasthan'],
-      likes: 127,
-      shares: 23
+  // Fetch real journal post from API
+  const { data: post, isLoading, error } = useQuery(
+    ['journal-post', id],
+    async () => {
+      try {
+        const response = await api.get(`/api/journal/${id}`);
+        return response.data.data?.post;
+      } catch (error) {
+        console.error('Failed to fetch journal post:', error);
+        throw error;
+      }
     },
     {
-      id: '2',
-      title: 'A Day with the Meenakari Masters',
-      excerpt: 'We sit down with a family that has been practicing the art of enamel jewelry for five generations.',
-      content: `Meenakari, the ancient art of enameling metal with intricate designs, is one of India's most exquisite jewelry traditions. This painstaking craft requires exceptional skill and patience, with master artisans dedicating decades to perfecting their techniques.
-
-## The Meenakari Legacy
-
-The art of Meenakari was introduced to India by Persian craftsmen during the Mughal era. The word "meenakari" comes from "mina," meaning enamel in Persian. This technique involves fusing colored glass to metal surfaces, creating vibrant, durable designs that can last for centuries.
-
-## The Process
-
-Creating Meenakari jewelry is a complex, multi-step process that can take weeks or even months to complete.
-
-### 1. Metal Preparation
-The base metal (usually gold or silver) is shaped and polished to create the foundation for the enamel work.
-
-### 2. Design Creation
-Intricate patterns are drawn or etched onto the metal surface. Traditional designs often feature floral motifs, geometric patterns, or scenes from Indian mythology.
-
-### 3. Enamel Application
-Colored enamel powders are carefully applied to different sections of the design. Each color requires a separate firing process, making this an incredibly time-consuming technique.
-
-### 4. Firing Process
-The piece is fired in a kiln at high temperatures, causing the enamel to melt and fuse with the metal. This process may be repeated multiple times for different colors.
-
-## The Artisan Family
-
-The Sharma family of Jaipur has been practicing Meenakari for five generations. Led by master craftsman Vikram Sharma, the family continues to create stunning pieces using traditional techniques passed down through the ages.
-
-"We don't just make jewelry," explains Vikram, "we preserve a legacy. Every piece we create carries the spirit of our ancestors and the promise of our future."
-
-## Contemporary Relevance
-
-While Meenakari remains rooted in tradition, modern artisans are finding innovative ways to adapt these techniques for contemporary tastes, creating pieces that honor the past while embracing the future.`,
-      image: 'https://images.unsplash.com/photo-1599408226244-5d0718ac8e99?q=80&w=1887&auto=format&fit=crop',
-      category: 'BEHIND THE CRAFT',
-      date: '2024-01-10',
-      readTime: '7 min read',
-      author: 'Amit Patel',
-      tags: ['Meenakari', 'Jewelry', 'Enameling', 'Jaipur'],
-      likes: 89,
-      shares: 15
+      enabled: !!id,
+      staleTime: 10 * 60 * 1000, // 10 minutes
+      cacheTime: 30 * 60 * 1000, // 30 minutes
     }
-  ];
+  );
 
-  const post = journalPosts.find(p => p.id === id);
-
-  if (!post) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  if (error || !post) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-2xl font-bold text-gray-900 mb-4">Article Not Found</h1>
-          <p className="text-gray-600 mb-8">The journal article you're looking for doesn't exist.</p>
-          <Link to="/journal" className="btn-primary">
+          <BookOpen className="w-16 h-16 text-gray-400 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Article not found</h2>
+          <p className="text-gray-600 mb-6">The journal article you're looking for doesn't exist.</p>
+          <button
+            onClick={() => navigate('/journal')}
+            className="bg-primary-600 text-white px-6 py-3 rounded-lg hover:bg-primary-700 transition-colors"
+          >
             Back to Journal
-          </Link>
+          </button>
         </div>
       </div>
     );
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white shadow-sm">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <button
-            onClick={() => navigate('/journal')}
-            className="flex items-center space-x-2 text-gray-600 hover:text-gray-900 transition-colors"
-          >
-            <ArrowLeft className="w-5 h-5" />
-            <span>Back to Journal</span>
-          </button>
-        </div>
-      </div>
+  const journalPost: JournalPost = post;
 
+  return (
+    <div className="min-h-screen bg-white">
+      {/* Navigation */}
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <button
+          onClick={() => navigate('/journal')}
+          className="flex items-center text-gray-600 hover:text-gray-900 mb-8 transition-colors"
+        >
+          <ArrowLeft className="w-5 h-5 mr-2" />
+          Back to Journal
+        </button>
+
         {/* Article Header */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <div className="mb-6">
-            <div className="flex items-center space-x-2 mb-4">
-              <Tag className="w-4 h-4 text-brand-clay" />
-              <span className="text-sm text-brand-clay font-semibold">{post.category}</span>
+        <article className="prose prose-lg max-w-none">
+          <header className="mb-12">
+            <div className="flex flex-wrap gap-2 mb-4">
+              <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-primary-100 text-primary-800">
+                <Tag className="w-4 h-4 mr-1" />
+                {journalPost.category}
+              </span>
+              {journalPost.tags.map((tag, index) => (
+                <span
+                  key={index}
+                  className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800"
+                >
+                  {tag}
+                </span>
+              ))}
             </div>
-            
-            <h1 className="text-4xl font-serif text-brand-ink mb-4">{post.title}</h1>
-            
-            <p className="text-xl text-gray-600 mb-6">{post.excerpt}</p>
-            
-            <div className="flex items-center justify-between text-sm text-gray-500 mb-6">
+
+            <h1 className="text-4xl font-bold text-gray-900 mb-6 leading-tight">
+              {journalPost.title}
+            </h1>
+
+            <p className="text-xl text-gray-600 mb-8 leading-relaxed">
+              {journalPost.excerpt}
+            </p>
+
+            <div className="flex items-center justify-between border-t border-b border-gray-200 py-6">
               <div className="flex items-center space-x-4">
-                <div className="flex items-center space-x-2">
-                  <Calendar className="w-4 h-4" />
-                  <span>{new Date(post.date).toLocaleDateString()}</span>
+                <div className="flex items-center text-gray-500">
+                  <Calendar className="w-5 h-5 mr-2" />
+                  <span>{new Date(journalPost.publishedAt).toLocaleDateString()}</span>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <BookOpen className="w-4 h-4" />
-                  <span>{post.readTime}</span>
+                <div className="flex items-center text-gray-500">
+                  <BookOpen className="w-5 h-5 mr-2" />
+                  <span>{journalPost.readTime}</span>
                 </div>
-                <span>By {post.author}</span>
               </div>
-              
+
               <div className="flex items-center space-x-4">
-                <button className="flex items-center space-x-1 text-gray-500 hover:text-red-500 transition-colors">
-                  <Heart className="w-4 h-4" />
-                  <span>{post.likes}</span>
+                <button className="flex items-center text-gray-500 hover:text-red-500 transition-colors">
+                  <Heart className="w-5 h-5 mr-2" />
+                  <span>Like</span>
                 </button>
-                <button className="flex items-center space-x-1 text-gray-500 hover:text-blue-500 transition-colors">
-                  <Share2 className="w-4 h-4" />
-                  <span>{post.shares}</span>
+                <button className="flex items-center text-gray-500 hover:text-blue-500 transition-colors">
+                  <Share2 className="w-5 h-5 mr-2" />
+                  <span>Share</span>
                 </button>
               </div>
             </div>
-          </div>
-          
+          </header>
+
           {/* Featured Image */}
-          <div className="mb-8">
-            <img
-              src={post.image}
-              alt={post.title}
-              className="w-full h-96 object-cover rounded-lg"
-              onError={(e) => {
-                const target = e.target as HTMLImageElement;
-                target.src = 'https://placehold.co/800x400/EAE5DE/3A2E24?text=Journal+Article';
-              }}
+          {journalPost.featuredImage && (
+            <div className="mb-12">
+              <img
+                src={journalPost.featuredImage}
+                alt={journalPost.title}
+                className="w-full h-96 object-cover rounded-lg shadow-lg"
+              />
+            </div>
+          )}
+
+          {/* Article Content */}
+          <div className="prose prose-lg max-w-none">
+            <div
+              className="whitespace-pre-wrap"
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(journalPost.content) }}
             />
           </div>
-        </div>
 
-        {/* Article Content */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <div className="prose prose-lg max-w-none">
-            {post.content.split('\n\n').map((paragraph, index) => {
-              if (paragraph.startsWith('## ')) {
-                return (
-                  <h2 key={index} className="text-2xl font-bold text-brand-ink mt-8 mb-4">
-                    {paragraph.replace('## ', '')}
-                  </h2>
-                );
-              }
-              if (paragraph.startsWith('### ')) {
-                return (
-                  <h3 key={index} className="text-xl font-semibold text-brand-ink mt-6 mb-3">
-                    {paragraph.replace('### ', '')}
-                  </h3>
-                );
-              }
-              if (paragraph.startsWith('- ')) {
-                return (
-                  <ul key={index} className="list-disc list-inside mb-4 space-y-2">
-                    {paragraph.split('\n').filter(item => item.startsWith('- ')).map((item, i) => (
-                      <li key={i} className="text-gray-700">{item.replace('- ', '')}</li>
-                    ))}
-                  </ul>
-                );
-              }
-              return (
-                <p key={index} className="text-gray-700 leading-relaxed mb-4">
-                  {paragraph}
-                </p>
-              );
-            })}
+          {/* Author Info */}
+          <div className="border-t border-gray-200 pt-8 mt-12">
+            <div className="flex items-center space-x-4">
+              <div className="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center">
+                <span className="text-2xl font-bold text-gray-600">
+                  {journalPost.author.charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">{journalPost.author}</h3>
+                <p className="text-gray-600">Contributing Writer</p>
+              </div>
+            </div>
           </div>
-        </div>
-
-        {/* Tags */}
-        <div className="bg-white rounded-lg shadow-sm p-8 mb-8">
-          <h3 className="text-lg font-semibold text-brand-ink mb-4">Tags</h3>
-          <div className="flex flex-wrap gap-2">
-            {post.tags.map((tag, index) => (
-              <span
-                key={index}
-                className="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm hover:bg-brand-clay hover:text-white transition-colors cursor-pointer"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        </div>
+        </article>
 
         {/* Related Articles */}
-        <div className="bg-white rounded-lg shadow-sm p-8">
-          <h3 className="text-lg font-semibold text-brand-ink mb-6">Related Articles</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {journalPosts.filter(p => p.id !== id).slice(0, 2).map((relatedPost) => (
-              <Link
-                key={relatedPost.id}
-                to={`/journal/${relatedPost.id}`}
-                className="group block hover:shadow-md transition-shadow duration-200"
-              >
-                <div className="bg-gray-50 rounded-lg overflow-hidden">
-                  <img
-                    src={relatedPost.image}
-                    alt={relatedPost.title}
-                    className="w-full h-32 object-cover group-hover:scale-105 transition-transform duration-200"
-                    onError={(e) => {
-                      const target = e.target as HTMLImageElement;
-                      target.src = 'https://placehold.co/400x200/EAE5DE/3A2E24?text=Related+Article';
-                    }}
-                  />
-                  <div className="p-4">
-                    <h4 className="font-semibold text-brand-ink group-hover:text-brand-clay transition-colors mb-2">
-                      {relatedPost.title}
-                    </h4>
-                    <p className="text-sm text-gray-600 line-clamp-2">{relatedPost.excerpt}</p>
-                  </div>
-                </div>
-              </Link>
-            ))}
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8">Related Articles</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {/* This would be populated with related articles from API */}
+            <div className="bg-gray-50 rounded-lg p-6">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">More articles coming soon...</h3>
+              <p className="text-gray-600">We're working on adding more journal content.</p>
+            </div>
           </div>
         </div>
       </div>

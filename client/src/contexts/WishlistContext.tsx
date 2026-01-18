@@ -1,9 +1,12 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
+import * as React from 'react';
+import { ReactNode } from 'react';
 import { useQuery, useMutation, useQueryClient } from 'react-query';
 import api from '../utils/api';
 import { WishlistItem } from '../types';
 import { useAuth } from './AuthContext';
 import toast from 'react-hot-toast';
+
+const { createContext, useContext, useState } = React;
 
 interface WishlistContextType {
   wishlist: WishlistItem[];
@@ -38,7 +41,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
   const { isLoading } = useQuery(
     ['wishlist'],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/wishlist' : '/wishlist';
+      const endpoint = '/api/wishlist';
       const response = await api.get(endpoint);
       return response.data.data;
     },
@@ -53,7 +56,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
   // Add to wishlist mutation
   const addToWishlistMutation = useMutation(
     async (productId: string) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/wishlist' : '/wishlist';
+      const endpoint = '/api/wishlist';
       const response = await api.post(endpoint, { productId });
       return response.data;
     },
@@ -71,7 +74,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
   // Remove from wishlist mutation
   const removeFromWishlistMutation = useMutation(
     async (productId: string) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/wishlist' : '/wishlist';
+      const endpoint = '/api/wishlist';
       const response = await api.delete(`${endpoint}/${productId}`);
       return response.data;
     },
@@ -89,7 +92,7 @@ export const WishlistProvider: React.FC<WishlistProviderProps> = ({ children }) 
   // Clear wishlist mutation
   const clearWishlistMutation = useMutation(
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/wishlist' : '/wishlist';
+      const endpoint = '/api/wishlist';
       const response = await api.delete(endpoint);
       return response.data;
     },

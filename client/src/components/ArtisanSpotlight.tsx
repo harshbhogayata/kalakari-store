@@ -4,29 +4,29 @@ import { useTranslation } from 'react-i18next';
 
 const ArtisanSpotlight: React.FC = () => {
   const { t } = useTranslation();
-  
+
   const featuredArtisan = {
     name: 'Rina Devi',
     title: 'FEATURED ARTISAN: WEAVER',
     quote: '"The loom is a part of my family. Every thread tells the story of my ancestors, and I weave that story into every shawl."',
     description: 'From a small village in the Kullu Valley, Rina Devi has been weaving for over 25 years, a skill passed down to her from her mother and grandmother. She uses only hand-spun local wool and natural dyes made from flowers and minerals found in the Himalayan foothills. Her work is renowned for its intricate geometric patterns and exceptional softness.',
-    image: 'https://images.unsplash.com/photo-1541600565421-392186a110a8?q=80&w=1887&auto=format&fit=crop',
+    image: '/images/artisans/rina_devi.png',
     products: [
       {
         name: 'Kullu Handwoven Shawl',
         price: 2800,
-        image: 'https://images.unsplash.com/photo-1619521441258-501a6b0f1b2a?q=80&w=1887&auto=format&fit=crop'
+        image: '/images/products/shawl.png'
       },
       {
         name: 'Himalayan Woolen Scarf',
         price: 1950,
-        image: 'https://images.unsplash.com/photo-1620581335275-c96a79893414?q=80&w=1887&auto=format&fit=crop'
+        image: '/images/products/scarf.png'
       }
     ]
   };
 
   return (
-    <section id="artisan-spotlight" className="py-28">
+    <section id="artisan-spotlight" className="py-16">
       <div className="container mx-auto px-6">
         <div className="text-center max-w-3xl mx-auto mb-20">
           <h2 className="text-5xl font-serif mb-4 animate-reveal">{t('home.artisanSpotlight.title')}</h2>
@@ -45,7 +45,7 @@ const ArtisanSpotlight: React.FC = () => {
               alt={`Portrait of ${featuredArtisan.name}`}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = 'https://placehold.co/600x700/EAE5DE/3A2E24?text=Artisan';
+                target.src = '/images/placeholder-artisan.png';
               }}
             />
           </div>

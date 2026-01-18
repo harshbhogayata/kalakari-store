@@ -13,7 +13,7 @@ const Dashboard: React.FC = () => {
   const { data: orders, isLoading: ordersLoading } = useQuery(
     'user-orders',
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/orders/user' : '/orders/user';
+      const endpoint = '/api/orders/user';
       const response = await api.get(endpoint);
       return response.data.data.orders;
     }
@@ -22,7 +22,7 @@ const Dashboard: React.FC = () => {
   const { data: recentProducts } = useQuery(
     'recent-products',
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products?limit=6&sortBy=createdAt&sortOrder=desc' : '/products?limit=6&sortBy=createdAt&sortOrder=desc';
+      const endpoint = '/api/products?limit=6&sortBy=createdAt&sortOrder=desc';
       const response = await api.get(endpoint);
       return response.data.data.products;
     }

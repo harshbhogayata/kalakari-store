@@ -1,7 +1,10 @@
 import React from 'react';
-import { TrendingUp } from 'lucide-react';
+import { Link } from 'react-router-dom';
+import { TrendingUp, ArrowRight } from 'lucide-react';
+import { useQuery } from 'react-query';
 import { Product } from '../../types';
-import { ProductCard } from '../ProductCard';
+import { ProductCard, ProductCardSkeleton } from '../ProductCard';
+import api from '../../utils/api';
 
 interface TrendingProductsProps {
   state?: string;
@@ -13,98 +16,100 @@ const TrendingProducts: React.FC<TrendingProductsProps> = ({
   limit = 8
 }) => {
 
-  // Mock trending products based on state
-  const getTrendingProducts = (): Product[] => {
-    const trendingProducts: Product[] = [];
-    
-    const categories = ['Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork', 'Paintings', 'Bamboo', 'Leather', 'Stone', 'Glass'];
-    const states = ['Rajasthan', 'Gujarat', 'West Bengal', 'Tamil Nadu', 'Kerala', 'Karnataka', 'Maharashtra', 'Uttar Pradesh', 'Bihar', 'Odisha'];
-    
-    // Generate trending products
-    for (let i = 0; i < limit; i++) {
-      const category = categories[Math.floor(Math.random() * categories.length)];
-      const productState = state || states[Math.floor(Math.random() * states.length)];
-      const isTrending = Math.random() > 0.3; // 70% chance of being trending
-      
-      trendingProducts.push({
-        _id: `trending_${i + 1}`,
-        name: `${productState} ${category} ${isTrending ? 'Trending' : 'Popular'}`,
-        description: `Popular ${category.toLowerCase()} from ${productState} - ${isTrending ? 'trending now' : 'customer favorite'}`,
-        price: 600 + Math.floor(Math.random() * 5000),
-        category: category,
-        images: [{ 
-          url: `https://images.unsplash.com/photo-${1578662996442 + i}?w=300`, 
-          alt: 'Trending Product' 
-        }],
-        inventory: { 
-          total: 15 + Math.floor(Math.random() * 20), 
-          available: 8 + Math.floor(Math.random() * 15), 
-          reserved: Math.floor(Math.random() * 5) 
-        },
-        rating: { 
-          average: 3.5 + Math.random() * 1.5, 
-          count: Math.floor(Math.random() * 150) 
-        },
-        isActive: true,
-        isApproved: true,
-        isFeatured: true, // All trending products are featured
-        materials: ['Clay', 'Natural Dyes', 'Water', 'Glaze'],
-        colors: [['Terracotta', 'Brown', 'Blue', 'Green', 'Red', 'Gold'][Math.floor(Math.random() * 6)]],
-        tags: [category, productState, 'Handmade', 'Traditional', isTrending ? 'Trending' : 'Popular'],
-        stats: { 
-          views: 200 + Math.floor(Math.random() * 800), 
-          likes: 50 + Math.floor(Math.random() * 200), 
-          shares: 10 + Math.floor(Math.random() * 100), 
-          orders: 30 + Math.floor(Math.random() * 150) 
-        },
-        artisanId: 'artisan_1',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-      });
+  // Fetch real trending products from API
+  const { data: trendingProducts = [], isLoading } = useQuery(
+    ['trending-products', state, limit],
+    async () => {
+      try {
+        const params = new URLSearchParams({
+          featured: 'true',
+          limit: limit.toString(),
+          sort: 'stats.views',
+          order: 'desc'
+        });
+
+        if (state) {
+          params.append('state', state);
+        }
+
+        const response = await api.get(`/api/products?${params}`);
+        return response.data.data?.products || [];
+      } catch (error) {
+        console.error('Failed to fetch trending products:', error);
+        return [];
+      }
+    },
+    {
+      staleTime: 5 * 60 * 1000,
+      cacheTime: 10 * 60 * 1000,
     }
-
-    // Sort by trending score (views + orders + likes)
-    return trendingProducts.sort((a, b) => {
-      const scoreA = (a.stats?.views || 0) + (a.stats?.orders || 0) + (a.stats?.likes || 0);
-      const scoreB = (b.stats?.views || 0) + (b.stats?.orders || 0) + (b.stats?.likes || 0);
-      return scoreB - scoreA;
-    });
-  };
-
-  const trendingProducts = getTrendingProducts();
-
-  // Custom handler for add to cart
-  const handleAddToCart = (product: Product) => {
-    // This will be handled by the ProductCard component
-  };
-
-  if (trendingProducts.length === 0) {
-    return null;
-  }
+  );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
-      <div className="flex items-center mb-4">
-        <TrendingUp className="w-6 h-6 text-primary-600 mr-2" />
-        <h3 className="text-xl font-semibold text-gray-900">
-          {state ? `Trending in ${state}` : 'Trending Products'}
-        </h3>
+    <section className="py-24 bg-white">
+      <div className="container mx-auto px-6">
+        {/* Section Header */}
+        <div className="flex flex-col md:flex-row md:items-end md:justify-between mb-14">
+          <div>
+            <div className="flex items-center gap-3 mb-4">
+              <div className="p-2 bg-rose-100 rounded-lg">
+                <TrendingUp className="w-5 h-5 text-rose-600" />
+              </div>
+              <span className="text-rose-600 font-medium tracking-wide text-sm uppercase">
+                Hot Right Now
+              </span>
+            </div>
+            <h2 className="text-4xl md:text-5xl font-serif text-gray-900">
+              {state ? `Trending in ${state}` : 'Trending This Week'}
+            </h2>
+          </div>
+          <Link
+            to="/products?sort=views&order=desc"
+            className="hidden md:inline-flex items-center gap-2 text-brand-clay font-medium hover:gap-4 transition-all duration-300 mt-4 md:mt-0"
+          >
+            View All Trending
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
+
+        {/* Products Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+          {isLoading ? (
+            Array.from({ length: 8 }).map((_, index) => (
+              <ProductCardSkeleton key={index} />
+            ))
+          ) : trendingProducts.length > 0 ? (
+            trendingProducts.slice(0, 8).map((product: Product) => (
+              <ProductCard
+                key={product._id}
+                product={product}
+                variant="compact"
+                showRating={true}
+                showStats={true}
+                showWishlist={true}
+                showQuickView={true}
+              />
+            ))
+          ) : (
+            // Placeholder when no products
+            <div className="col-span-full text-center py-12">
+              <p className="text-gray-500">No trending products at the moment</p>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile View All Link */}
+        <div className="text-center mt-10 md:hidden">
+          <Link
+            to="/products?sort=views&order=desc"
+            className="inline-flex items-center gap-2 px-6 py-3 border-2 border-brand-clay text-brand-clay font-medium rounded-full hover:bg-brand-clay hover:text-white transition-all duration-300"
+          >
+            View All Trending
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+        </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {trendingProducts.map((product) => (
-          <ProductCard
-            key={product._id}
-            product={product}
-            variant="trending"
-            showRating={true}
-            showStats={true}
-            showWishlist={true}
-            showQuickView={true}
-            onAddToCart={handleAddToCart}
-          />
-        ))}
-      </div>
-    </div>
+    </section>
   );
 };
 

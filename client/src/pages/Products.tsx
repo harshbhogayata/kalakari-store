@@ -49,7 +49,7 @@ const Products: React.FC = () => {
       });
       
       // Use mock endpoint in development mode
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
+      const endpoint = '/api/products';
       const fullUrl = `${endpoint}?${params.toString()}`;
           // API call logging removed for production
       const response = await axios.get(fullUrl);
@@ -260,8 +260,24 @@ const Products: React.FC = () => {
                     currentMin={parseInt(filters.minPrice) || 0}
                     currentMax={parseInt(filters.maxPrice) || 10000}
                     onRangeChange={(min, max) => {
-                      handleFilterChange('minPrice', min.toString());
-                      handleFilterChange('maxPrice', max.toString());
+                      const newFilters = { 
+                        ...filters, 
+                        minPrice: min.toString(), 
+                        maxPrice: max.toString() 
+                      };
+                      setFilters(newFilters);
+                      
+                      const params = new URLSearchParams();
+                      Object.entries(newFilters).forEach(([k, v]) => {
+                        if (v !== undefined && v !== '' && v !== false) {
+                          if (Array.isArray(v)) {
+                            if (v.length > 0) params.set(k, v.join(','));
+                          } else {
+                            params.set(k, v.toString());
+                          }
+                        }
+                      });
+                      setSearchParams(params);
                     }}
                   />
                 </div>

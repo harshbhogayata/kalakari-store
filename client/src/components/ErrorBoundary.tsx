@@ -1,5 +1,8 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react';
+import * as React from 'react';
+import { ErrorInfo, ReactNode } from 'react';
 import { AlertTriangle, RefreshCw, Home } from 'lucide-react';
+
+const { Component } = React;
 
 interface Props {
   children: ReactNode;

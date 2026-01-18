@@ -17,7 +17,7 @@ const Contact: React.FC = () => {
   // Contact form mutation
   const contactMutation = useMutation(
     async (data: typeof formData) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/email/contact' : '/email/contact';
+      const endpoint = '/api/contact';
       const response = await api.post(endpoint, data);
       return response.data;
     },

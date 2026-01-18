@@ -13,12 +13,13 @@ import LoadingSpinner from '../components/LoadingSpinner';
 import toast from 'react-hot-toast';
 import { createRazorpayOrder, verifyPayment, openRazorpayCheckout } from '../utils/razorpay';
 import { getErrorMessage } from '../utils/errorUtils';
+import logger from '../utils/logger';
 
 const CheckoutNew: React.FC = () => {
   const { user } = useAuth();
   const { items, clearCart, getTotalPrice } = useCart();
   const navigate = useNavigate();
-  
+
   const [step, setStep] = useState<'address' | 'payment' | 'review'>(user ? 'address' : 'address');
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
   const [selectedPayment, setSelectedPayment] = useState<PaymentMethodType | null>(null);
@@ -47,7 +48,7 @@ const CheckoutNew: React.FC = () => {
   const total = subtotal + shipping - discount;
 
   // Debug logging for shipping calculation
-  console.log('CheckoutNew - Cart totals:', {
+  logger.log('CheckoutNew - Cart totals:', {
     itemsCount: items.length,
     subtotal,
     shipping,
@@ -58,7 +59,7 @@ const CheckoutNew: React.FC = () => {
   // Place order mutation
   const placeOrderMutation = useMutation(
     async (orderData: any) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/orders' : '/orders';
+      const endpoint = '/api/orders';
       const response = await api.post(endpoint, orderData);
       return response.data;
     },
@@ -116,10 +117,10 @@ const CheckoutNew: React.FC = () => {
   const handleRazorpayPayment = async () => {
     try {
       const totalAmount = getTotalPrice();
-      
+
       // Create Razorpay order
       const order = await createRazorpayOrder(totalAmount);
-      
+
       const options = {
         key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_1DP5mmOlF5G5ag',
         amount: order.amount,
@@ -140,24 +141,24 @@ const CheckoutNew: React.FC = () => {
         },
         handler: async (response: any) => {
           try {
-            console.log('Razorpay payment response:', response);
-            console.log('Response keys:', Object.keys(response));
-            console.log('Available order object:', order);
-            
+            logger.log('Razorpay payment response:', response);
+            logger.log('Response keys:', Object.keys(response));
+            logger.log('Available order object:', order);
+
             // Extract payment details from response - handle different possible field names
             const orderId = response.razorpay_order_id || response.order_id || response.orderId || order?.id;
             const paymentId = response.razorpay_payment_id || response.payment_id || response.paymentId;
-            const signature = response.razorpay_signature || response.signature || `mock_signature_${Date.now()}`;
-            
-            console.log('Extracted payment details:', { orderId, paymentId, signature });
-            
+            const signature = response.razorpay_signature || response.signature;
+
+            logger.log('Extracted payment details:', { orderId, paymentId, signature });
+
             // Ensure we have all required fields
             const finalOrderId = orderId || order?.id || 'unknown_order_id';
             const finalPaymentId = paymentId || 'unknown_payment_id';
-            const finalSignature = signature || `mock_signature_${Date.now()}`;
-            
-            console.log('Final payment details being sent:', { finalOrderId, finalPaymentId, finalSignature });
-            
+            const finalSignature = signature || 'unknown_signature';
+
+            logger.log('Final payment details being sent:', { finalOrderId, finalPaymentId, finalSignature });
+
             // Verify payment
             const verification = await verifyPayment(
               finalOrderId,
@@ -165,7 +166,7 @@ const CheckoutNew: React.FC = () => {
               finalSignature
             );
 
-            console.log('Payment verification result:', verification);
+            logger.log('Payment verification result:', verification);
 
             if (verification.success) {
               // Payment verified, create order
@@ -238,7 +239,7 @@ const CheckoutNew: React.FC = () => {
             <ArrowLeft className="w-5 h-5" />
             <span>Back to Cart</span>
           </button>
-          
+
           <div className="flex items-center justify-between">
             <h1 className="text-3xl font-bold text-gray-900">Checkout</h1>
             <div className="flex items-center space-x-2 text-sm text-gray-600">
@@ -260,8 +261,8 @@ const CheckoutNew: React.FC = () => {
                 <div className="flex items-center space-x-2">
                   <div className={`
                     w-8 h-8 rounded-full flex items-center justify-center font-semibold
-                    ${step === s.id 
-                      ? 'bg-primary-600 text-white' 
+                    ${step === s.id
+                      ? 'bg-primary-600 text-white'
                       : index < ['address', 'payment', 'review'].indexOf(step)
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-200 text-gray-600'
@@ -269,18 +270,16 @@ const CheckoutNew: React.FC = () => {
                   `}>
                     {s.num}
                   </div>
-                  <span className={`text-sm font-medium ${
-                    step === s.id ? 'text-gray-900' : 'text-gray-500'
-                  }`}>
+                  <span className={`text-sm font-medium ${step === s.id ? 'text-gray-900' : 'text-gray-500'
+                    }`}>
                     {s.label}
                   </span>
                 </div>
                 {index < 2 && (
-                  <div className={`w-16 h-1 ${
-                    index < ['address', 'payment', 'review'].indexOf(step)
+                  <div className={`w-16 h-1 ${index < ['address', 'payment', 'review'].indexOf(step)
                       ? 'bg-primary-600'
                       : 'bg-gray-200'
-                  }`} />
+                    }`} />
                 )}
               </React.Fragment>
             ))}
@@ -297,7 +296,7 @@ const CheckoutNew: React.FC = () => {
                   selectedAddressId={selectedAddress?._id || null}
                   onSelectAddress={setSelectedAddress}
                 />
-                
+
                 <div className="mt-6 flex justify-end">
                   <button
                     onClick={handleContinueToPayment}
@@ -335,7 +334,7 @@ const CheckoutNew: React.FC = () => {
                   selectedMethod={selectedPayment}
                   onSelectMethod={setSelectedPayment}
                 />
-                
+
                 <div className="mt-6 flex justify-between">
                   <button
                     onClick={() => setStep('address')}
@@ -358,7 +357,7 @@ const CheckoutNew: React.FC = () => {
             {step === 'review' && (
               <div className="bg-white rounded-lg shadow-sm p-6">
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Review Your Order</h3>
-                
+
                 {/* Delivery Address */}
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-2">

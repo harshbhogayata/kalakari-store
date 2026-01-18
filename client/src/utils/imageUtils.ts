@@ -11,7 +11,7 @@ import config from '../config/env';
  * @returns Image URL with fallback
  */
 export const getImageUrl = (
-  imageUrl?: string, 
+  imageUrl?: string,
   fallback: keyof typeof config.images = 'placeholder'
 ): string => {
   return imageUrl || config.images[fallback];
@@ -62,6 +62,8 @@ export const getArtisanImage = (imageUrl?: string): string => {
  * @returns Unsplash image URL
  */
 export const getUnsplashImage = (seed: number, width = 300, height = 200): string => {
+  // Use local placeholder pattern if needed, or keep unsplash for random variation if preferred.
+  // For now, let's keep Unsplash for diversity but use our minimal seed
   return `https://images.unsplash.com/photo-${seed}?w=${width}&h=${height}&auto=format&fit=crop`;
 };
 

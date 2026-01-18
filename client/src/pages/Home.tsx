@@ -10,7 +10,6 @@ import ArtisanSpotlight from '../components/ArtisanSpotlight';
 import JournalSection from '../components/JournalSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import NotifyMeModal from '../components/NotifyMeModal';
-import TrendingProducts from '../components/Recommendations/TrendingProducts';
 
 const Home: React.FC = () => {
   // const { t } = useTranslation();
@@ -19,12 +18,12 @@ const Home: React.FC = () => {
 
   // Fetch featured products with better error handling and caching
   const { data: featuredProducts, isLoading } = useQuery(
-    'featured-products', 
+    'featured-products',
     async () => {
       try {
         // Use mock endpoint in development mode
-        const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
-        const response = await api.get(`${endpoint}?featured=true&limit=3`);
+        const endpoint = '/api/products';
+        const response = await api.get(`${endpoint}?featured=true&limit=8`);
         return response.data.data?.products || [];
       } catch (error) {
         // Featured products loading error handled silently - will use empty array
@@ -50,12 +49,11 @@ const Home: React.FC = () => {
       <HeroSection />
       <FeaturesSection />
       <FeaturedProducts products={featuredProducts} isLoading={isLoading} />
-      <TrendingProducts limit={8} />
       <ArtisanStory />
       <ArtisanSpotlight />
       <JournalSection />
       <TestimonialsSection />
-      
+
       <NotifyMeModal
         isOpen={notifyModalOpen}
         onClose={() => setNotifyModalOpen(false)}

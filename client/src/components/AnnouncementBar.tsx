@@ -23,8 +23,8 @@ const AnnouncementBar: React.FC = () => {
   return (
     <div className="bg-brand-gold text-brand-ink text-center py-3 px-4 sm:px-6 relative transition-all duration-500">
       <p className="text-sm font-medium">
-        Our new Diwali Collection is here! ✨{' '}
-        <Link to="/diwali" className="underline font-bold hover:text-white">
+        Free shipping on orders above ₹2000! ✨{' '}
+        <Link to="/products" className="underline font-bold hover:text-white">
           Shop Now
         </Link>
       </p>

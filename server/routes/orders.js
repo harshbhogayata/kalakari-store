@@ -5,6 +5,7 @@ const Product = require('../models/Product');
 const Artisan = require('../models/Artisan');
 const { protect, authorize } = require('../middleware/auth');
 const emailService = require('../services/email');
+const smsService = require('../services/sms');
 
 const router = express.Router();
 
@@ -73,8 +74,12 @@ router.post('/', protect, authorize('customer'), [
     const tax = Math.round(subtotal * 0.18); // 18% GST
     const total = subtotal + shipping + tax;
 
+    // Generate unique order ID
+    const orderId = `ORD${Date.now()}${Math.random().toString(36).substr(2, 5).toUpperCase()}`;
+
     // Create order
     const orderData = {
+      orderId,
       customerId: req.user._id,
       items: validatedItems,
       shippingAddress,
@@ -86,8 +91,10 @@ router.post('/', protect, authorize('customer'), [
         total
       },
       payment: {
-        method: paymentMethod
-      }
+        method: paymentMethod,
+        status: 'pending'
+      },
+      status: 'pending'
     };
 
     const order = await Order.create(orderData);
@@ -109,6 +116,23 @@ router.post('/', protect, authorize('customer'), [
     } catch (emailError) {
       console.error('❌ Failed to send order confirmation emails:', emailError);
       // Don't fail the order creation if email fails
+    }
+
+    // Send SMS notification
+    try {
+      const smsResult = await smsService.sendOrderConfirmation(
+        shippingAddress.phone, 
+        {
+          orderId: order.orderId,
+          total: order.pricing.total
+        }
+      );
+      if (smsResult.success) {
+        console.log(`✅ Order confirmation SMS sent for order ${order.orderId}`);
+      }
+    } catch (smsError) {
+      console.error('❌ Failed to send order confirmation SMS:', smsError);
+      // Don't fail the order creation if SMS fails
     }
 
     res.status(201).json({

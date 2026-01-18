@@ -19,7 +19,7 @@ const AdminProducts: React.FC = () => {
       if (statusFilter) params.append('status', statusFilter);
       if (categoryFilter) params.append('category', categoryFilter);
       
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/admin/products' : '/admin/products';
+      const endpoint = '/api/admin/products';
       const response = await api.get(`${endpoint}?${params.toString()}`);
       return response.data.data;
     }
@@ -28,7 +28,7 @@ const AdminProducts: React.FC = () => {
   // Approve/Reject product mutation
   const approveProductMutation = useMutation(
     async ({ productId, isApproved }: { productId: string; isApproved: boolean }) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/admin/products' : '/admin/products';
+      const endpoint = '/api/admin/products';
       const response = await api.put(`${endpoint}/${productId}/approve`, {
         isApproved,
         notes: isApproved ? 'Approved by admin' : 'Rejected by admin'

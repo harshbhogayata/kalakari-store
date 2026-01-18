@@ -9,7 +9,7 @@ const ArtisanDashboard: React.FC = () => {
   const { data: stats, isLoading } = useQuery(
     'artisan-stats',
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/artisans/dashboard/stats' : '/artisans/dashboard/stats';
+      const endpoint = '/api/artisans/dashboard/stats';
       const response = await api.get(endpoint);
       return response.data.data.stats;
     }
@@ -18,7 +18,7 @@ const ArtisanDashboard: React.FC = () => {
   const { data: recentProducts } = useQuery(
     'recent-products',
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products/artisan/my-products?limit=5' : '/products/artisan/my-products?limit=5';
+      const endpoint = '/api/products/artisan/my-products?limit=5';
       const response = await api.get(endpoint);
       return response.data.data.products;
     }

@@ -18,7 +18,7 @@ const Cart: React.FC = () => {
       if (items.length === 0) return [];
       
       const productPromises = items.map(item => {
-        const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
+        const endpoint = '/api/products';
         return api.get(`${endpoint}/${item.productId}`).then(res => ({
           ...res.data.data.product,
           cartQuantity: item.quantity,

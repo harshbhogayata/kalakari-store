@@ -19,9 +19,7 @@ const ArtisanProducts: React.FC = () => {
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
       
-      const endpoint = process.env.NODE_ENV === 'development' 
-        ? '/api/dev/products/artisan/my-products'
-        : '/products/artisan/my-products';
+      const endpoint = '/api/products/artisan/my-products';
       
       const response = await api.get(`${endpoint}?${params.toString()}`);
       return response.data.data;
@@ -31,7 +29,7 @@ const ArtisanProducts: React.FC = () => {
   // Delete product mutation
   const deleteProductMutation = useMutation(
     async (productId: string) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/products' : '/products';
+      const endpoint = '/api/products';
       const response = await api.delete(`${endpoint}/${productId}`);
       return response.data;
     },

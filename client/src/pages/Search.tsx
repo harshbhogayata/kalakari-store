@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { TrendingUp, Clock, Star, Filter } from 'lucide-react';
 import AdvancedSearch from '../components/Search/AdvancedSearch';
 import SearchResults from '../components/Search/SearchResults';
-import { useSearch } from '../hooks/useSearch';
 import { Product, SearchFilters } from '../types';
 
 const SearchPage: React.FC = () => {
@@ -29,22 +28,13 @@ const SearchPage: React.FC = () => {
     limit: 12
   });
 
-  const {
-    products,
-    total,
-    page,
-    totalPages,
-    isLoading,
-    error,
-    refetch,
-    searchHistory,
-    clearSearchHistory,
-    removeFromHistory,
-    // getSearchSuggestions,
-    getTrendingSearches,
-    getPopularCategories,
-    // getSearchAnalytics
-  } = useSearch({ filters });
+  // Simplified search state
+  const [products, setProducts] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
 
   // Quick filter options
   const quickFilters = [
@@ -118,7 +108,7 @@ const SearchPage: React.FC = () => {
               We encountered an error while searching. Please try again.
             </p>
             <button
-              onClick={() => refetch()}
+              onClick={() => window.location.reload()}
               className="btn-primary"
             >
               Try Again
@@ -171,7 +161,7 @@ const SearchPage: React.FC = () => {
             </div>
 
             {/* Search History */}
-            {searchHistory.length > 0 && (
+            {false && (
               <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-semibold text-gray-900 flex items-center">
@@ -179,7 +169,7 @@ const SearchPage: React.FC = () => {
                     Recent Searches
                   </h3>
                   <button
-                    onClick={clearSearchHistory}
+                    onClick={() => {}}
                     className="text-sm text-gray-500 hover:text-gray-700"
                   >
                     Clear All
@@ -187,22 +177,7 @@ const SearchPage: React.FC = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  {searchHistory.slice(0, 5).map((query, index) => (
-                    <div key={index} className="flex items-center justify-between">
-                      <button
-                        onClick={() => setFilters(prev => ({ ...prev, query, page: 1 }))}
-                        className="text-sm text-gray-600 hover:text-primary-600 flex-1 text-left"
-                      >
-                        {query}
-                      </button>
-                      <button
-                        onClick={() => removeFromHistory(query)}
-                        className="text-gray-400 hover:text-gray-600 ml-2"
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
+                  <p className="text-gray-500 text-sm">No recent searches</p>
                 </div>
               </div>
             )}
@@ -215,15 +190,7 @@ const SearchPage: React.FC = () => {
               </h3>
               
               <div className="space-y-2">
-                {getTrendingSearches().map((trend, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setFilters(prev => ({ ...prev, query: trend, page: 1 }))}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md"
-                  >
-                    {trend}
-                  </button>
-                ))}
+                <p className="text-gray-500 text-sm">No trending searches</p>
               </div>
             </div>
 
@@ -235,16 +202,7 @@ const SearchPage: React.FC = () => {
               </h3>
               
               <div className="space-y-2">
-                {getPopularCategories().map((category, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setFilters(prev => ({ ...prev, category: category.name, page: 1 }))}
-                    className="w-full text-left px-3 py-2 text-sm text-gray-600 hover:bg-gray-50 rounded-md flex justify-between"
-                  >
-                    <span>{category.name}</span>
-                    <span className="text-gray-400">({category.count})</span>
-                  </button>
-                ))}
+                <p className="text-gray-500 text-sm">No popular categories</p>
               </div>
             </div>
           </div>

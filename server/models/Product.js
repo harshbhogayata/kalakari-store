@@ -21,10 +21,11 @@ const productSchema = new mongoose.Schema({
     type: String,
     required: [true, 'Category is required'],
     enum: [
-      'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork', 
+      'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork',
       'Leather', 'Bamboo', 'Stone', 'Glass', 'Paper', 'Home Decor',
       'Kitchenware', 'Accessories', 'Clothing', 'Footwear', 'Other',
-      'Diwali Collection', 'Festive Decor', 'Traditional Crafts', 'Paintings'
+      'Home Decor', 'Kitchenware', 'Accessories', 'Clothing', 'Footwear', 'Other', 'Festive Decor', 'Traditional Crafts', 'Paintings',
+      'Diyas & Lamps', 'Decorations', 'Candles', 'Traditional Items'
     ]
   },
   subcategory: {
@@ -120,6 +121,10 @@ const productSchema = new mongoose.Schema({
     shares: { type: Number, default: 0 },
     orders: { type: Number, default: 0 }
   },
+  rating: {
+    average: { type: Number, default: 0, min: 0, max: 5 },
+    count: { type: Number, default: 0, min: 0 }
+  },
   createdAt: {
     type: Date,
     default: Date.now
@@ -131,26 +136,26 @@ const productSchema = new mongoose.Schema({
 });
 
 // Update timestamp on save
-productSchema.pre('save', function(next) {
+productSchema.pre('save', function (next) {
   this.updatedAt = Date.now();
-  
-    // VALIDATION: Ensure available inventory never exceeds total
+
+  // VALIDATION: Ensure available inventory never exceeds total
   if (this.inventory.available > this.inventory.total) {
     const error = new Error('Available inventory cannot exceed total inventory');
     return next(error);
   }
-  
+
   // VALIDATION: Ensure reserved inventory doesn't exceed available
   if (this.inventory.reserved > this.inventory.available) {
     const error = new Error('Reserved inventory cannot exceed available inventory');
     return next(error);
   }
-  
+
   // Calculate discount if original price is provided
   if (this.originalPrice && this.price && this.originalPrice > this.price) {
     this.discount = Math.round(((this.originalPrice - this.price) / this.originalPrice) * 100);
   }
-  
+
   next();
 });
 

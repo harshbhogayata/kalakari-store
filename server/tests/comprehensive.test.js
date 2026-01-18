@@ -25,10 +25,10 @@ describe('Kalakari E-commerce API', () => {
   });
 
   describe('Authentication Endpoints', () => {
-    describe('POST /api/dev/auth/login', () => {
+    describe('POST /api/auth/login', () => {
       it('should login with valid credentials', async () => {
         const response = await request(app)
-          .post('/api/dev/auth/login')
+          .post('/api/auth/login')
           .send({
             email: 'priya@gmail.com',
             password: 'Kalakari2024!'
@@ -42,7 +42,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should reject invalid credentials', async () => {
         const response = await request(app)
-          .post('/api/dev/auth/login')
+          .post('/api/auth/login')
           .send({
             email: 'invalid@example.com',
             password: 'wrongpassword'
@@ -54,7 +54,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should validate required fields', async () => {
         const response = await request(app)
-          .post('/api/dev/auth/login')
+          .post('/api/auth/login')
           .send({});
 
         testUtils.expectErrorResponse(response, 400);
@@ -62,9 +62,9 @@ describe('Kalakari E-commerce API', () => {
       });
     });
 
-    describe('GET /api/dev/auth/me', () => {
+    describe('GET /api/auth/me', () => {
       it('should return user data with valid token', async () => {
-        const response = await testUtils.authenticatedRequest('get', '/api/dev/auth/me', authToken);
+        const response = await testUtils.authenticatedRequest('get', '/api/auth/me', authToken);
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.data).toHaveProperty('user');
@@ -73,7 +73,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should reject request without token', async () => {
         const response = await request(app)
-          .get('/api/dev/auth/me');
+          .get('/api/auth/me');
 
         testUtils.expectErrorResponse(response, 401);
         expect(response.body.message).toContain('No token, authorization denied');
@@ -82,10 +82,10 @@ describe('Kalakari E-commerce API', () => {
   });
 
   describe('Product Endpoints', () => {
-    describe('GET /api/dev/products', () => {
+    describe('GET /api/products', () => {
       it('should return products list', async () => {
         const response = await request(app)
-          .get('/api/dev/products');
+          .get('/api/products');
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
@@ -94,7 +94,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should support pagination', async () => {
         const response = await request(app)
-          .get('/api/dev/products?page=1&limit=5');
+          .get('/api/products?page=1&limit=5');
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.data.length).toBeLessThanOrEqual(5);
@@ -102,7 +102,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should support category filtering', async () => {
         const response = await request(app)
-          .get('/api/dev/products?category=Pottery');
+          .get('/api/products?category=Pottery');
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.data.every(product => product.category === 'Pottery')).toBe(true);
@@ -110,7 +110,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should support price range filtering', async () => {
         const response = await request(app)
-          .get('/api/dev/products?minPrice=1000&maxPrice=3000');
+          .get('/api/products?minPrice=1000&maxPrice=3000');
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.data.every(product => 
@@ -119,10 +119,10 @@ describe('Kalakari E-commerce API', () => {
       });
     });
 
-    describe('GET /api/dev/products/:id', () => {
+    describe('GET /api/products/:id', () => {
       it('should return product details', async () => {
         const response = await request(app)
-          .get('/api/dev/products/product_1');
+          .get('/api/products/product_1');
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.data).toHaveProperty('name');
@@ -132,7 +132,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should return 404 for non-existent product', async () => {
         const response = await request(app)
-          .get('/api/dev/products/nonexistent');
+          .get('/api/products/nonexistent');
 
         testUtils.expectErrorResponse(response, 404);
       });
@@ -146,10 +146,10 @@ describe('Kalakari E-commerce API', () => {
       orderData = testUtils.createTestOrder();
     });
 
-    describe('POST /api/dev/orders', () => {
+    describe('POST /api/orders', () => {
       it('should create order with valid data', async () => {
         const response = await request(app)
-          .post('/api/dev/orders')
+          .post('/api/orders')
           .send(orderData);
 
         testUtils.expectValidResponse(response, 201);
@@ -162,7 +162,7 @@ describe('Kalakari E-commerce API', () => {
         delete invalidOrder.items;
 
         const response = await request(app)
-          .post('/api/dev/orders')
+          .post('/api/orders')
           .send(invalidOrder);
 
         testUtils.expectErrorResponse(response, 400);
@@ -174,7 +174,7 @@ describe('Kalakari E-commerce API', () => {
         invalidOrder.shippingAddress.name = '';
 
         const response = await request(app)
-          .post('/api/dev/orders')
+          .post('/api/orders')
           .send(invalidOrder);
 
         testUtils.expectErrorResponse(response, 400);
@@ -182,9 +182,9 @@ describe('Kalakari E-commerce API', () => {
       });
     });
 
-    describe('GET /api/dev/orders/user', () => {
+    describe('GET /api/orders/user', () => {
       it('should return user orders', async () => {
-        const response = await testUtils.authenticatedRequest('get', '/api/dev/orders/user', authToken);
+        const response = await testUtils.authenticatedRequest('get', '/api/orders/user', authToken);
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
@@ -193,10 +193,10 @@ describe('Kalakari E-commerce API', () => {
   });
 
   describe('Payment Endpoints', () => {
-    describe('POST /api/dev/payments/create-order', () => {
+    describe('POST /api/payments/create-order', () => {
       it('should create Razorpay order', async () => {
         const response = await request(app)
-          .post('/api/dev/payments/create-order')
+          .post('/api/payments/create-order')
           .send({
             amount: 2000,
             currency: 'INR'
@@ -209,7 +209,7 @@ describe('Kalakari E-commerce API', () => {
 
       it('should validate amount', async () => {
         const response = await request(app)
-          .post('/api/dev/payments/create-order')
+          .post('/api/payments/create-order')
           .send({
             amount: 0,
             currency: 'INR'
@@ -220,10 +220,10 @@ describe('Kalakari E-commerce API', () => {
       });
     });
 
-    describe('POST /api/dev/payments/verify', () => {
+    describe('POST /api/payments/verify', () => {
       it('should verify payment', async () => {
         const response = await request(app)
-          .post('/api/dev/payments/verify')
+          .post('/api/payments/verify')
           .send({
             orderId: 'test_order_123',
             paymentId: 'pay_test_123',
@@ -238,18 +238,18 @@ describe('Kalakari E-commerce API', () => {
   });
 
   describe('Wishlist Endpoints', () => {
-    describe('GET /api/dev/wishlist', () => {
+    describe('GET /api/wishlist', () => {
       it('should return user wishlist', async () => {
-        const response = await testUtils.authenticatedRequest('get', '/api/dev/wishlist', authToken);
+        const response = await testUtils.authenticatedRequest('get', '/api/wishlist', authToken);
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
       });
     });
 
-    describe('POST /api/dev/wishlist', () => {
+    describe('POST /api/wishlist', () => {
       it('should add product to wishlist', async () => {
-        const response = await testUtils.authenticatedRequest('post', '/api/dev/wishlist', authToken)
+        const response = await testUtils.authenticatedRequest('post', '/api/wishlist', authToken)
           .send({
             productId: 'product_1'
           });
@@ -259,9 +259,9 @@ describe('Kalakari E-commerce API', () => {
       });
     });
 
-    describe('DELETE /api/dev/wishlist/:productId', () => {
+    describe('DELETE /api/wishlist/:productId', () => {
       it('should remove product from wishlist', async () => {
-        const response = await testUtils.authenticatedRequest('delete', '/api/dev/wishlist/product_1', authToken);
+        const response = await testUtils.authenticatedRequest('delete', '/api/wishlist/product_1', authToken);
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.message).toContain('removed from wishlist');
@@ -270,17 +270,17 @@ describe('Kalakari E-commerce API', () => {
   });
 
   describe('Review Endpoints', () => {
-    describe('GET /api/dev/products/:productId/reviews', () => {
+    describe('GET /api/products/:productId/reviews', () => {
       it('should return product reviews', async () => {
         const response = await request(app)
-          .get('/api/dev/products/product_1/reviews');
+          .get('/api/products/product_1/reviews');
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
       });
     });
 
-    describe('POST /api/dev/products/:productId/reviews', () => {
+    describe('POST /api/products/:productId/reviews', () => {
       it('should create review with valid data', async () => {
         const reviewData = {
           rating: 5,
@@ -288,7 +288,7 @@ describe('Kalakari E-commerce API', () => {
           title: 'Excellent quality'
         };
 
-        const response = await testUtils.authenticatedRequest('post', '/api/dev/products/product_1/reviews', authToken)
+        const response = await testUtils.authenticatedRequest('post', '/api/products/product_1/reviews', authToken)
           .send(reviewData);
 
         testUtils.expectValidResponse(response, 201);
@@ -297,7 +297,7 @@ describe('Kalakari E-commerce API', () => {
       });
 
       it('should validate rating range', async () => {
-        const response = await testUtils.authenticatedRequest('post', '/api/dev/products/product_1/reviews', authToken)
+        const response = await testUtils.authenticatedRequest('post', '/api/products/product_1/reviews', authToken)
           .send({
             rating: 6,
             comment: 'Invalid rating'
@@ -316,27 +316,27 @@ describe('Kalakari E-commerce API', () => {
       adminToken = testUtils.generateTestToken('admin_1', 'admin');
     });
 
-    describe('GET /api/dev/admin/products', () => {
+    describe('GET /api/admin/products', () => {
       it('should return all products for admin', async () => {
-        const response = await testUtils.authenticatedRequest('get', '/api/dev/admin/products', adminToken);
+        const response = await testUtils.authenticatedRequest('get', '/api/admin/products', adminToken);
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
       });
 
       it('should reject non-admin users', async () => {
-        const response = await testUtils.authenticatedRequest('get', '/api/dev/admin/products', authToken);
+        const response = await testUtils.authenticatedRequest('get', '/api/admin/products', authToken);
 
         testUtils.expectErrorResponse(response, 403);
         expect(response.body.message).toContain('Access denied');
       });
     });
 
-    describe('POST /api/dev/admin/products', () => {
+    describe('POST /api/admin/products', () => {
       it('should create product with valid data', async () => {
         const productData = testUtils.createTestProduct();
 
-        const response = await testUtils.authenticatedRequest('post', '/api/dev/admin/products', adminToken)
+        const response = await testUtils.authenticatedRequest('post', '/api/admin/products', adminToken)
           .send(productData);
 
         testUtils.expectValidResponse(response, 201);
@@ -347,10 +347,10 @@ describe('Kalakari E-commerce API', () => {
   });
 
   describe('Search Endpoints', () => {
-    describe('GET /api/dev/search', () => {
+    describe('GET /api/search', () => {
       it('should search products by query', async () => {
         const response = await request(app)
-          .get('/api/dev/search?q=pottery');
+          .get('/api/search?q=pottery');
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
@@ -358,17 +358,17 @@ describe('Kalakari E-commerce API', () => {
 
       it('should return empty array for no results', async () => {
         const response = await request(app)
-          .get('/api/dev/search?q=nonexistentproduct');
+          .get('/api/search?q=nonexistentproduct');
 
         testUtils.expectValidResponse(response, 200);
         expect(response.body.data).toHaveLength(0);
       });
     });
 
-    describe('GET /api/dev/search/suggestions', () => {
+    describe('GET /api/search/suggestions', () => {
       it('should return search suggestions', async () => {
         const response = await request(app)
-          .get('/api/dev/search/suggestions?q=pot');
+          .get('/api/search/suggestions?q=pot');
 
         testUtils.expectValidResponse(response, 200);
         expect(Array.isArray(response.body.data)).toBe(true);
@@ -379,7 +379,7 @@ describe('Kalakari E-commerce API', () => {
   describe('Error Handling', () => {
     it('should handle 404 for non-existent endpoints', async () => {
       const response = await request(app)
-        .get('/api/dev/nonexistent');
+        .get('/api/nonexistent');
 
       expect(response.status).toBe(404);
       expect(response.body.success).toBe(false);
@@ -388,7 +388,7 @@ describe('Kalakari E-commerce API', () => {
     it('should handle server errors gracefully', async () => {
       // This would require mocking a server error
       const response = await request(app)
-        .get('/api/dev/products/invalid-id');
+        .get('/api/products/invalid-id');
 
       // Should not crash the server
       expect(response.status).toBeGreaterThanOrEqual(400);
@@ -400,7 +400,7 @@ describe('Kalakari E-commerce API', () => {
       const start = Date.now();
       
       const response = await request(app)
-        .get('/api/dev/products');
+        .get('/api/products');
       
       const duration = Date.now() - start;
       
@@ -410,7 +410,7 @@ describe('Kalakari E-commerce API', () => {
 
     it('should handle concurrent requests', async () => {
       const promises = Array.from({ length: 10 }, () => 
-        request(app).get('/api/dev/products')
+        request(app).get('/api/products')
       );
 
       const responses = await Promise.all(promises);
@@ -435,7 +435,7 @@ describe('Performance Benchmarks', () => {
     const start = Date.now();
     
     const promises = Array.from({ length: 100 }, () => 
-      request(app).get('/api/dev/products')
+      request(app).get('/api/products')
     );
 
     const responses = await Promise.all(promises);

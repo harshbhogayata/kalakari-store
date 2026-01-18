@@ -73,7 +73,7 @@ const ArtisanRegister: React.FC = () => {
 
   const artisanRegisterMutation = useMutation(
     async (data: ArtisanRegisterData) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/auth/artisan-register' : '/auth/artisan-register';
+      const endpoint = '/api/auth/artisan-register';
       
       // Create FormData for file upload
       const formDataToSend = new FormData();

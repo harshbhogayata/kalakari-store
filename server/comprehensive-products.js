@@ -287,7 +287,7 @@ function getColorsForCategory(category) {
 }
 
 // Development endpoints
-app.post('/api/dev/comprehensive-products', async (req, res) => {
+app.post('/api/comprehensive-products', async (req, res) => {
   try {
     const result = await createComprehensiveProducts();
     res.json(result);

@@ -8,12 +8,13 @@ import { CACHE_TTL, PAGINATION, FILE_SIZE, API_TIMEOUT, VALIDATION } from '../co
 export const config = {
   // API Configuration
   api: {
-    baseUrl: process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5000/api' 
-      : '/api'),
-    devBaseUrl: process.env.NODE_ENV === 'development' 
-      ? 'http://localhost:5000/api' 
-      : '/api',
+    // Base URL should NOT include /api since all API calls include it
+    baseUrl: process.env.REACT_APP_API_URL || (process.env.NODE_ENV === 'development'
+      ? 'http://localhost:5000'
+      : ''),
+    devBaseUrl: process.env.NODE_ENV === 'development'
+      ? 'http://localhost:5000'
+      : '',
     timeout: API_TIMEOUT.DEFAULT,
   },
 
@@ -25,12 +26,12 @@ export const config = {
 
   // Image Configuration
   images: {
-    placeholder: 'https://placehold.co/600x400/EAE5DE/3A2E24?text=Image',
-    fallback: 'https://via.placeholder.com/400x300',
-    journalPlaceholder: 'https://placehold.co/800x400/EAE5DE/3A2E24?text=Journal+Article',
-    artisanPlaceholder: 'https://placehold.co/600x700/EAE5DE/3A2E24?text=Artisan',
-    productPlaceholder: 'https://placehold.co/600x800/EAE5DE/3A2E24?text=Product',
-    avatarPlaceholder: 'https://placehold.co/100x100/EAE5DE/3A2E24?text=Avatar',
+    placeholder: '/images/placeholder-product.png',
+    fallback: '/images/placeholder-product.png',
+    journalPlaceholder: '/images/placeholder-journal.png',
+    artisanPlaceholder: '/images/placeholder-artisan.png',
+    productPlaceholder: '/images/placeholder-product.png',
+    avatarPlaceholder: '/images/placeholder-avatar.png',
   },
 
   // Social Media Links

@@ -24,7 +24,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
   const { data: addressesData, isLoading } = useQuery(
     ['addresses'],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/addresses' : '/addresses';
+      const endpoint = '/api/addresses';
       const response = await api.get(endpoint);
       return response.data.data.addresses || [];
     }
@@ -34,7 +34,7 @@ const AddressSelector: React.FC<AddressSelectorProps> = ({
 
   const handleAddAddress = async (data: AddressFormData) => {
     try {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/addresses' : '/addresses';
+      const endpoint = '/api/addresses';
       const response = await api.post(endpoint, data);
       
       if (response.data.success) {

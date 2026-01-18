@@ -17,7 +17,7 @@ const OrderSuccess: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/dev/orders/${orderId}`);
+      const response = await fetch(`/api/orders/${orderId}`);
       const data = await response.json();
       
       if (data.success && data.data) {

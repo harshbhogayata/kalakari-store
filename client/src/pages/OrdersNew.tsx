@@ -31,7 +31,7 @@ const OrdersNew: React.FC = () => {
   const { data: ordersData, isLoading, error, refetch } = useQuery(
     ['orders', statusFilter],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/orders' : '/orders';
+      const endpoint = '/api/orders';
       const params = statusFilter !== 'all' ? `?status=${statusFilter}` : '';
       const response = await api.get(`${endpoint}${params}`);
       return response.data.data;

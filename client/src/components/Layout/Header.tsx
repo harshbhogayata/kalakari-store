@@ -1,25 +1,22 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Search, ShoppingCart, User } from 'lucide-react';
+import { Search, User } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '../../contexts/AuthContext';
-import { useCart } from '../../contexts/CartContext';
 import LanguageSelector from '../LanguageSelector';
+import MiniCart from '../MiniCart';
 
 const Header: React.FC = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const { t } = useTranslation();
   const { user, logout } = useAuth();
-  const { getTotalItems } = useCart();
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   const handleLogout = () => {
     logout();
     setIsUserMenuOpen(false);
   };
-
-  const cartItemsCount = getTotalItems();
 
   // Close user menu when clicking outside
   useEffect(() => {
@@ -57,21 +54,18 @@ const Header: React.FC = () => {
           <Link to="/journal" className="hover:text-brand-clay transition-colors">
             {t('navigation.journal')}
           </Link>
-          <Link to="/diwali" className="hover:text-brand-clay transition-colors bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-1 rounded-full text-sm font-medium">
-            ✨ Diwali
-          </Link>
         </div>
 
         {/* Right Side Actions */}
         <div className="flex items-center space-x-4">
           {/* Language Selector */}
           <LanguageSelector />
-          
+
           {/* Search */}
           <Link to="/search" className="text-brand-ink hover:text-brand-clay transition-colors">
             <Search className="w-6 h-6" />
           </Link>
-          
+
           {/* User Menu */}
           {user ? (
             <div className="relative" ref={userMenuRef}>
@@ -81,7 +75,7 @@ const Header: React.FC = () => {
               >
                 <User className="w-6 h-6" />
               </button>
-              
+
               {/* User Dropdown */}
               {isUserMenuOpen && (
                 <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50">
@@ -89,7 +83,7 @@ const Header: React.FC = () => {
                     <p className="text-sm font-medium text-gray-900">{user.name}</p>
                     <p className="text-xs text-gray-500 capitalize">{user.role}</p>
                   </div>
-                  
+
                   {/* Dashboard Link */}
                   {user.role === 'admin' && (
                     <Link
@@ -100,7 +94,7 @@ const Header: React.FC = () => {
                       Admin Dashboard
                     </Link>
                   )}
-                  
+
                   {user.role === 'artisan' && (
                     <Link
                       to="/artisan/dashboard"
@@ -110,7 +104,7 @@ const Header: React.FC = () => {
                       Artisan Dashboard
                     </Link>
                   )}
-                  
+
                   {user.role === 'customer' && (
                     <Link
                       to="/dashboard"
@@ -120,7 +114,7 @@ const Header: React.FC = () => {
                       My Dashboard
                     </Link>
                   )}
-                  
+
                   <Link
                     to="/profile"
                     className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -128,7 +122,7 @@ const Header: React.FC = () => {
                   >
                     Profile
                   </Link>
-                  
+
                   {user.role === 'customer' && (
                     <>
                       <Link
@@ -147,7 +141,7 @@ const Header: React.FC = () => {
                       </Link>
                     </>
                   )}
-                  
+
                   <button
                     onClick={handleLogout}
                     className="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
@@ -162,20 +156,10 @@ const Header: React.FC = () => {
               <User className="w-6 h-6" />
             </Link>
           )}
-          
-          
+
+
           {/* Cart */}
-          <Link
-            to="/cart"
-            className="text-brand-ink hover:text-brand-clay transition-colors relative"
-          >
-            <ShoppingCart className="w-6 h-6" />
-            {cartItemsCount > 0 && (
-              <span className="absolute -top-2 -right-2 bg-brand-clay text-white text-xs rounded-full h-5 w-5 flex items-center justify-center">
-                {cartItemsCount}
-              </span>
-            )}
-          </Link>
+          <MiniCart />
 
           {/* Mobile Menu Button */}
           <button
@@ -222,13 +206,6 @@ const Header: React.FC = () => {
                 onClick={() => setIsMenuOpen(false)}
               >
                 The Journal
-              </Link>
-              <Link
-                to="/diwali"
-                className="block text-lg hover:text-brand-clay transition-colors bg-gradient-to-r from-orange-500 to-red-500 text-white px-3 py-2 rounded-full text-center font-medium"
-                onClick={() => setIsMenuOpen(false)}
-              >
-                ✨ Diwali Collection
               </Link>
               <Link
                 to="/search"

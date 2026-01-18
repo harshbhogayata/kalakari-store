@@ -1,7 +1,11 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import * as React from 'react';
+import { ReactNode } from 'react';
 import { User, Artisan, AuthContextType, RegisterData } from '../types';
 import api from '../utils/api';
+import logger from '../utils/logger';
 import toast from 'react-hot-toast';
+
+const { createContext, useContext, useState, useEffect } = React;
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -28,50 +32,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const checkAuth = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const userData = localStorage.getItem('user');
-      if (token && userData) {
-        const user = JSON.parse(userData);
+      // Try to get user data from server using HTTP-only cookie
+      const response = await api.get('/api/auth/me');
+      if (response.data.success) {
+        const user = response.data.data.user;
         setUser(user);
-        
+
         // Check if user is an artisan
         if (user.role === 'artisan') {
           try {
-            const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/auth/me' : '/auth/me';
-            const response = await api.get(endpoint);
-            if (response.data.success) {
-              setArtisan(response.data.data.artisanProfile);
-            }
-          } catch (error) {
-            // No artisan profile found - user is customer
-          }
-        }
-      }
-    } catch (error) {
-      // Auth check failed - clear invalid credentials
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const login = async (email: string, password: string) => {
-    try {
-      // Use mock endpoint in development mode
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/auth/login' : '/auth/login';
-      const response = await api.post(endpoint, { email, password });
-      
-      if (response.data.success) {
-        const { user: userData, token } = response.data.data;
-        localStorage.setItem('token', token);
-        localStorage.setItem('user', JSON.stringify(userData));
-        setUser(userData);
-        
-        // Check if user is an artisan
-        if (userData.role === 'artisan') {
-          try {
-            const artisanResponse = await api.get('/artisans/profile');
+            const artisanResponse = await api.get('/api/artisans/profile');
             if (artisanResponse.data.success) {
               setArtisan(artisanResponse.data.data.artisan);
             }
@@ -79,7 +49,46 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             // No artisan profile found - user is customer
           }
         }
-        
+      }
+    } catch (error: any) {
+      // Auth check failed - user is not logged in
+      logger.log('User not authenticated:', error.response?.status);
+      localStorage.removeItem('user');
+      setUser(null);
+      setArtisan(null);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const login = async (email: string, password: string) => {
+    try {
+      // Get CSRF token before login
+      const csrfResponse = await api.get('/api/csrf-token');
+      if (csrfResponse.data.success) {
+        localStorage.setItem('csrfToken', csrfResponse.data.csrfToken);
+      }
+
+      const response = await api.post('/api/auth/login', { email, password });
+
+      if (response.data.success) {
+        const { user: userData } = response.data.data;
+        // Don't store token in localStorage - server sets HTTP-only cookie
+        localStorage.setItem('user', JSON.stringify(userData));
+        setUser(userData);
+
+        // Check if user is an artisan
+        if (userData.role === 'artisan') {
+          try {
+            const artisanResponse = await api.get('/api/artisans/profile');
+            if (artisanResponse.data.success) {
+              setArtisan(artisanResponse.data.data.artisan);
+            }
+          } catch (error) {
+            // No artisan profile found - user is customer
+          }
+        }
+
         toast.success('Login successful!');
         return userData; // Return user data for immediate use
       }
@@ -92,11 +101,18 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const register = async (userData: RegisterData) => {
     try {
-      const response = await api.post('/auth/register', userData);
-      
+      // Get CSRF token before registration
+      const csrfResponse = await api.get('/api/csrf-token');
+      if (csrfResponse.data.success) {
+        localStorage.setItem('csrfToken', csrfResponse.data.csrfToken);
+      }
+
+      const response = await api.post('/api/auth/register', userData);
+
       if (response.data.success) {
-        const { user: newUser, token } = response.data.data;
-        localStorage.setItem('token', token);
+        const { user: newUser } = response.data.data;
+        // Token is now stored in HTTP-only cookie by server (matches login behavior)
+        localStorage.setItem('user', JSON.stringify(newUser));
         setUser(newUser);
         toast.success('Registration successful!');
       }
@@ -109,7 +125,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const logout = async () => {
     try {
-      await api.post('/auth/logout');
+      await api.post('/api/auth/logout');
     } catch (error) {
       // Logout error handled silently - credentials cleared regardless
     } finally {
@@ -123,8 +139,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const updateProfile = async (data: Partial<User>) => {
     try {
-      const response = await api.put('/auth/profile', data);
-      
+      const response = await api.put('/api/auth/profile', data);
+
       if (response.data.success) {
         setUser(response.data.data.user);
         toast.success('Profile updated successfully');

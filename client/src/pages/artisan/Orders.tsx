@@ -13,7 +13,7 @@ const ArtisanOrders: React.FC = () => {
       const params = new URLSearchParams();
       if (statusFilter) params.append('status', statusFilter);
       
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/orders/artisan/my-orders' : '/orders/artisan/my-orders';
+      const endpoint = '/api/orders/artisan/my-orders';
       const response = await api.get(`${endpoint}?${params.toString()}`);
       return response.data.data;
     }

@@ -25,7 +25,7 @@ const OrderDetailNew: React.FC = () => {
   const { data: orderData, isLoading, error, refetch } = useQuery(
     ['order', id],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/orders' : '/orders';
+      const endpoint = '/api/orders';
       const response = await api.get(`${endpoint}/${id}`);
       return response.data.data.order;
     },
@@ -37,7 +37,7 @@ const OrderDetailNew: React.FC = () => {
   // Cancel order mutation
   const cancelOrderMutation = useMutation(
     async (reason: string) => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/orders' : '/orders';
+      const endpoint = '/api/orders';
       const response = await api.patch(`${endpoint}/${id}/cancel`, { reason });
       return response.data;
     },

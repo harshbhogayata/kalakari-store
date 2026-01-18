@@ -16,7 +16,7 @@ const ArtisanDetail: React.FC = () => {
   const { data: artisanData, isLoading, error } = useQuery(
     ['artisan', id],
     async () => {
-      const endpoint = process.env.NODE_ENV === 'development' ? '/api/dev/artisans' : '/artisans';
+      const endpoint = '/api/artisans';
       const response = await api.get(`${endpoint}/${id}`);
       return response.data.data.artisan;
     },
