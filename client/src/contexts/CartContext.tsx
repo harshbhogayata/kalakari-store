@@ -23,52 +23,8 @@ interface CartProviderProps {
 
 export const CartProvider: React.FC<CartProviderProps> = ({ children, isLoggedIn = false, userId }) => {
   const [items, setItems] = useState<CartItem[]>([]);
-  const [isSynced, setIsSynced] = useState(false);
-  const [syncError, setSyncError] = useState<string | null>(null);
 
-  // Load cart on mount or when login status changes
-  useEffect(() => {
-    loadCart();
-  }, [isLoggedIn, userId]);
-
-  // Auto-sync cart every 30 seconds if logged in
-  useEffect(() => {
-    if (!isLoggedIn) return;
-
-    const syncInterval = setInterval(() => {
-      syncCartToServer();
-    }, 30000); // Sync every 30 seconds
-
-    return () => clearInterval(syncInterval);
-  }, [isLoggedIn, items]);
-
-  const loadCart = async () => {
-    try {
-      if (isLoggedIn && userId) {
-        // Load from server for logged-in users
-        try {
-          const response = await api.get('/api/cart');
-          if (response.data.success && response.data.data.items) {
-            setItems(response.data.data.items);
-            setSyncError(null);
-            setIsSynced(true);
-          }
-        } catch (error: any) {
-          // If server fetch fails, fall back to local storage
-          console.warn('Failed to load cart from server, using local storage:', error.message);
-          loadFromLocalStorage();
-          setSyncError('Using local cart - server sync unavailable');
-        }
-      } else {
-        // Load from local storage for guests
-        loadFromLocalStorage();
-      }
-    } catch (error) {
-      console.error('Cart loading error:', error);
-    }
-  };
-
-  const loadFromLocalStorage = () => {
+  const loadFromLocalStorage = React.useCallback(() => {
     try {
       const savedCart = localStorage.getItem('cart');
       if (savedCart) {
@@ -77,23 +33,11 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, isLoggedIn
     } catch (error) {
       console.warn('Cart loading error from localStorage', error);
     }
-  };
+  }, []);
 
-  const saveCart = (cartItems: CartItem[]) => {
-    try {
-      // Always save to local storage as backup
-      localStorage.setItem('cart', JSON.stringify(cartItems));
 
-      // If logged in, also sync to server
-      if (isLoggedIn) {
-        syncCartToServer(cartItems);
-      }
-    } catch (error) {
-      console.warn('Cart saving error:', error);
-    }
-  };
 
-  const syncCartToServer = async (cartItems: CartItem[] = items) => {
+  const syncCartToServer = React.useCallback(async (cartItems: CartItem[] = items) => {
     if (!isLoggedIn || !userId) return;
 
     try {
@@ -110,27 +54,75 @@ export const CartProvider: React.FC<CartProviderProps> = ({ children, isLoggedIn
           variant: item.variant
         });
       }
-
-      setSyncError(null);
-      setIsSynced(true);
     } catch (error: any) {
       console.warn('Cart sync to server failed:', error.message);
-      setSyncError('Failed to sync cart with server');
     }
-  };
+  }, [items, isLoggedIn, userId]);
+
+  const saveCart = React.useCallback((cartItems: CartItem[]) => {
+    try {
+      // Always save to local storage as backup
+      localStorage.setItem('cart', JSON.stringify(cartItems));
+
+      // If logged in, also sync to server
+      if (isLoggedIn) {
+        syncCartToServer(cartItems);
+      }
+    } catch (error) {
+      console.warn('Cart saving error:', error);
+    }
+  }, [isLoggedIn, syncCartToServer]);
+
+  // Load cart on mount or when login status changes
+  useEffect(() => {
+    const loadCart = async () => {
+      try {
+        if (isLoggedIn && userId) {
+          // Load from server for logged-in users
+          try {
+            const response = await api.get('/api/cart');
+            if (response.data.success && response.data.data.items) {
+              setItems(response.data.data.items);
+            }
+          } catch (error: any) {
+            // If server fetch fails, fall back to local storage
+            console.warn('Failed to load cart from server, using local storage:', error.message);
+            loadFromLocalStorage();
+          }
+        } else {
+          // Load from local storage for guests
+          loadFromLocalStorage();
+        }
+      } catch (error) {
+        console.error('Cart loading error:', error);
+      }
+    };
+    loadCart();
+  }, [isLoggedIn, userId, loadFromLocalStorage]);
+
+  // Auto-sync cart every 30 seconds if logged in
+  useEffect(() => {
+    if (!isLoggedIn) return;
+
+    const syncInterval = setInterval(() => {
+      syncCartToServer();
+    }, 30000); // Sync every 30 seconds
+
+    return () => clearInterval(syncInterval);
+  }, [isLoggedIn, syncCartToServer]);
 
   const addItem = (item: CartItem) => {
     setItems(prevItems => {
-      const existingItem = prevItems.find(i => 
-        i.productId === item.productId && 
+      const existingItem = prevItems.find(i =>
+        i.productId === item.productId &&
         JSON.stringify(i.variant) === JSON.stringify(item.variant)
       );
 
       let newItems;
       if (existingItem) {
         newItems = prevItems.map(i =>
-          i.productId === item.productId && 
-          JSON.stringify(i.variant) === JSON.stringify(item.variant)
+          i.productId === item.productId &&
+            JSON.stringify(i.variant) === JSON.stringify(item.variant)
             ? { ...i, quantity: i.quantity + item.quantity }
             : i
         );

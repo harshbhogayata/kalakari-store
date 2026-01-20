@@ -22,7 +22,7 @@ const RelatedProducts: React.FC<RelatedProductsProps> = ({
 }) => {
 
   // Fetch real related products from API
-  const { data: relatedProducts = [], isLoading } = useQuery(
+  const { data: relatedProducts = [] } = useQuery(
     ['related-products', productId, category, state, materials, limit],
     async () => {
       try {

@@ -16,7 +16,7 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
 }) => {
 
   // Fetch real recently viewed products from API
-  const { data: recentlyViewedProducts = [], isLoading } = useQuery(
+  const { data: recentlyViewedProducts = [] } = useQuery(
     ['recently-viewed', currentProductId, limit],
     async () => {
       try {
@@ -25,11 +25,11 @@ const RecentlyViewed: React.FC<RecentlyViewedProps> = ({
           sort: 'updatedAt',
           order: 'desc'
         });
-        
+
         if (currentProductId) {
           params.append('exclude', currentProductId);
         }
-        
+
         const response = await api.get(`/api/products?${params}`);
         return response.data.data?.products || [];
       } catch (error) {
