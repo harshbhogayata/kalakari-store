@@ -26,7 +26,7 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
   const { user } = useAuth();
 
   // Fetch real product recommendations from API
-  const { data: recommendations = [], isLoading } = useQuery(
+  const { data: recommendations = [] } = useQuery(
     ['product-recommendations', productId, category, state, limit],
     async () => {
       try {
@@ -34,15 +34,15 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
           limit: limit.toString(),
           exclude: productId
         });
-        
+
         if (category) {
           params.append('category', category);
         }
-        
+
         if (state) {
           params.append('state', state);
         }
-        
+
         const response = await api.get(`/api/products?${params}`);
         return response.data.data?.products || [];
       } catch (error) {
@@ -104,7 +104,7 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
               <p className="text-sm text-gray-600 mb-2 line-clamp-2">
                 {product.description}
               </p>
-              
+
               <div className="flex items-center mb-2">
                 <div className="flex items-center">
                   <Star className="w-4 h-4 text-yellow-400 fill-current" />
@@ -117,7 +117,7 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
                   ₹{product.price?.toLocaleString() || '0'}
                 </span>
               </div>
-              
+
               <div className="flex space-x-2">
                 <button
                   onClick={() => handleAddToCart(product)}
@@ -126,7 +126,7 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
                   <ShoppingCart className="w-4 h-4 mr-1" />
                   Add to Cart
                 </button>
-                <WishlistButton 
+                <WishlistButton
                   productId={product._id}
                   showText={false}
                   className="p-2 border border-gray-300 rounded-lg hover:border-primary-600 hover:text-primary-600 transition-colors duration-200"
