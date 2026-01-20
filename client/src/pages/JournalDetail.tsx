@@ -1,5 +1,5 @@
 import React from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, Calendar, Tag, Share2, Heart, BookOpen } from 'lucide-react';
 import { useQuery } from 'react-query';
 import DOMPurify from 'dompurify';

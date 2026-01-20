@@ -12,7 +12,7 @@ const SearchPage: React.FC = () => {
   const [showQuickFilters, setShowQuickFilters] = useState(false);
 
   // Initialize filters from URL params
-  const [filters, setFilters] = useState<SearchFilters>({
+  const [, setFilters] = useState<SearchFilters>({
     query: searchParams.get('q') || '',
     category: searchParams.get('category') || '',
     artisanId: searchParams.get('artisan') || '',
@@ -29,12 +29,12 @@ const SearchPage: React.FC = () => {
   });
 
   // Simplified search state
-  const [products, setProducts] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
+  const [products] = useState<any[]>([]);
+  const [isLoading] = useState(false);
+  const [error] = useState<string | null>(null);
+  const [total] = useState(0);
+  const [page] = useState(1);
+  const [totalPages] = useState(1);
 
   // Quick filter options
   const quickFilters = [
@@ -144,7 +144,7 @@ const SearchPage: React.FC = () => {
                   <Filter className="w-5 h-5" />
                 </button>
               </div>
-              
+
               {showQuickFilters && (
                 <div className="space-y-2">
                   {quickFilters.map((filter, index) => (
@@ -169,13 +169,13 @@ const SearchPage: React.FC = () => {
                     Recent Searches
                   </h3>
                   <button
-                    onClick={() => {}}
+                    onClick={() => { }}
                     className="text-sm text-gray-500 hover:text-gray-700"
                   >
                     Clear All
                   </button>
                 </div>
-                
+
                 <div className="space-y-2">
                   <p className="text-gray-500 text-sm">No recent searches</p>
                 </div>
@@ -188,7 +188,7 @@ const SearchPage: React.FC = () => {
                 <TrendingUp className="w-5 h-5 mr-2" />
                 Trending
               </h3>
-              
+
               <div className="space-y-2">
                 <p className="text-gray-500 text-sm">No trending searches</p>
               </div>
@@ -200,7 +200,7 @@ const SearchPage: React.FC = () => {
                 <Star className="w-5 h-5 mr-2" />
                 Popular Categories
               </h3>
-              
+
               <div className="space-y-2">
                 <p className="text-gray-500 text-sm">No popular categories</p>
               </div>
@@ -237,35 +237,34 @@ const SearchPage: React.FC = () => {
                   >
                     Previous
                   </button>
-                  
+
                   {[...Array(totalPages)].map((_, index) => {
                     const pageNum = index + 1;
                     const isCurrentPage = pageNum === page;
-                    const showPage = pageNum === 1 || pageNum === totalPages || 
-                                   (pageNum >= page - 2 && pageNum <= page + 2);
-                    
+                    const showPage = pageNum === 1 || pageNum === totalPages ||
+                      (pageNum >= page - 2 && pageNum <= page + 2);
+
                     if (!showPage) {
                       if (pageNum === page - 3 || pageNum === page + 3) {
                         return <span key={pageNum} className="px-2 text-gray-500">...</span>;
                       }
                       return null;
                     }
-                    
+
                     return (
                       <button
                         key={pageNum}
                         onClick={() => handlePageChange(pageNum)}
-                        className={`px-3 py-2 border rounded-md text-sm font-medium ${
-                          isCurrentPage
+                        className={`px-3 py-2 border rounded-md text-sm font-medium ${isCurrentPage
                             ? 'bg-primary-600 text-white border-primary-600'
                             : 'border-gray-300 text-gray-700 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         {pageNum}
                       </button>
                     );
                   })}
-                  
+
                   <button
                     onClick={() => handlePageChange(page + 1)}
                     disabled={page === totalPages}
