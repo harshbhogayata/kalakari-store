@@ -9,7 +9,7 @@ const HeroSection: React.FC = () => {
   useEffect(() => {
     const img = new Image();
     img.onload = () => setBackgroundLoaded(true);
-    img.src = '/images/hero/craftsman.png';
+    img.src = '/images/hero/craftsman.webp';
   }, []);
 
   return (
@@ -19,7 +19,7 @@ const HeroSection: React.FC = () => {
       }`}
       style={{
         backgroundImage: backgroundLoaded 
-          ? `linear-gradient(to top, rgba(58, 46, 36, 0.6), rgba(58, 46, 36, 0.2)), url('/images/hero/craftsman.png')`
+          ? `linear-gradient(to top, rgba(58, 46, 36, 0.6), rgba(58, 46, 36, 0.2)), url('/images/hero/craftsman.webp')`
           : undefined,
         backgroundSize: 'cover',
         backgroundPosition: 'center',

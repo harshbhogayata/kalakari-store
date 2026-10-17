@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { useTranslation } from 'react-i18next';
 import { Search, Grid, List, X, SlidersHorizontal, Star, Package, MapPin, Palette, Wrench } from 'lucide-react';
-import axios from 'axios';
-// import api from '../utils/api'; // TODO: Use for API calls when needed
+import api from '../utils/api';
 import config from '../config/env';
 import { Product } from '../types';
 import LazyImage from '../components/LazyImage';
@@ -13,6 +12,58 @@ import EmptyState from '../components/EmptyState';
 import ErrorMessage from '../components/ErrorMessage';
 import ProductBadge from '../components/ProductBadge';
 import PriceRangeSlider from '../components/PriceRangeSlider';
+import ServerWakeNotice from '../components/ServerWakeNotice';
+
+type ProductFilters = {
+  search: string;
+  category: string;
+  state: string;
+  minPrice: string;
+  maxPrice: string;
+  minRating: string;
+  materials: string[];
+  colors: string[];
+  inStock: boolean;
+  sort: string;
+  order: string;
+  page: number;
+};
+
+const DEFAULT_SORT = 'createdAt';
+const DEFAULT_ORDER = 'desc';
+const PRICE_MIN = 0;
+const PRICE_MAX = 10000;
+
+// The URL is the single source of truth for filters, so header/footer links such as
+// /products?category=Textiles work even when the Products page is already open.
+const parseFilters = (searchParams: URLSearchParams): ProductFilters => ({
+  search: searchParams.get('search') || '',
+  category: searchParams.get('category') || '',
+  state: searchParams.get('state') || '',
+  minPrice: searchParams.get('minPrice') || '',
+  maxPrice: searchParams.get('maxPrice') || '',
+  minRating: searchParams.get('minRating') || '',
+  materials: searchParams.get('materials')?.split(',').filter(Boolean) || [],
+  colors: searchParams.get('colors')?.split(',').filter(Boolean) || [],
+  inStock: searchParams.get('inStock') === 'true',
+  sort: searchParams.get('sort') || DEFAULT_SORT,
+  order: searchParams.get('order') || DEFAULT_ORDER,
+  page: Math.max(parseInt(searchParams.get('page') || '1', 10) || 1, 1),
+});
+
+const filtersToParams = (filters: ProductFilters): URLSearchParams => {
+  const params = new URLSearchParams();
+  Object.entries(filters).forEach(([key, value]) => {
+    if (key === 'page' && value === 1) return;
+    if (value === undefined || value === '' || value === false) return;
+    if (Array.isArray(value)) {
+      if (value.length > 0) params.set(key, value.join(','));
+    } else {
+      params.set(key, value.toString());
+    }
+  });
+  return params;
+};
 
 const Products: React.FC = () => {
   const { t } = useTranslation();
@@ -20,62 +71,58 @@ const Products: React.FC = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
   const [showFilters, setShowFilters] = useState(false);
-  const [filters, setFilters] = useState({
-    search: searchParams.get('search') || '',
-    category: searchParams.get('category') || '',
-    state: searchParams.get('state') || '',
-    minPrice: searchParams.get('minPrice') || '',
-    maxPrice: searchParams.get('maxPrice') || '',
-    minRating: searchParams.get('minRating') || '',
-    materials: searchParams.get('materials')?.split(',') || [],
-    colors: searchParams.get('colors')?.split(',') || [],
-    inStock: searchParams.get('inStock') === 'true',
-    sort: searchParams.get('sort') || 'createdAt',
-    order: searchParams.get('order') || 'desc',
-  });
+  const filters = useMemo(() => parseFilters(searchParams), [searchParams]);
 
-  const { data: productsData, isLoading, error, refetch } = useQuery(
-    ['products', filters],
+  // Search box and price slider update the URL after a short pause, not on every keystroke/drag
+  const [searchInput, setSearchInput] = useState(filters.search);
+  useEffect(() => { setSearchInput(filters.search); }, [filters.search]);
+
+  const { data: productsData, isLoading, isFetching, error, refetch } = useQuery(
+    ['products', filtersToParams(filters).toString()],
     async () => {
-      const params = new URLSearchParams();
-      Object.entries(filters).forEach(([key, value]) => {
-        if (value !== undefined && value !== '' && value !== false) {
-          if (Array.isArray(value)) {
-            if (value.length > 0) params.set(key, value.join(','));
-          } else {
-            params.set(key, value.toString());
-          }
-        }
-      });
-      
-      // Use mock endpoint in development mode
-      const endpoint = '/api/products';
-      const fullUrl = `${endpoint}?${params.toString()}`;
-          // API call logging removed for production
-      const response = await axios.get(fullUrl);
+      const params = filtersToParams(filters);
+      params.set('page', String(filters.page));
+      params.set('limit', '12');
+      const response = await api.get(`/api/products?${params.toString()}`);
       return response.data.data;
+    },
+    {
+      keepPreviousData: true,
+      staleTime: 60 * 1000,
     }
   );
 
-  const handleFilterChange = (key: string, value: any) => {
-    const newFilters = { ...filters, [key]: value };
-    setFilters(newFilters);
-    
-    const params = new URLSearchParams();
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v !== undefined && v !== '' && v !== false) {
-        if (Array.isArray(v)) {
-          if (v.length > 0) params.set(k, v.join(','));
-        } else {
-          params.set(k, v.toString());
-        }
-      }
-    });
-    setSearchParams(params);
+  const updateFilters = (changes: Partial<ProductFilters>) => {
+    // Any filter change returns to page 1; only explicit page changes keep a page number
+    const next: ProductFilters = { ...filters, page: 1, ...changes };
+    setSearchParams(filtersToParams(next));
+  };
+
+  const handleFilterChange = (key: keyof ProductFilters, value: any) => {
+    updateFilters({ [key]: value } as Partial<ProductFilters>);
+  };
+
+  useEffect(() => {
+    if (searchInput === filters.search) return;
+    const timer = setTimeout(() => updateFilters({ search: searchInput }), 400);
+    return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [searchInput]);
+
+  const priceTimer = useRef<ReturnType<typeof setTimeout>>();
+  useEffect(() => () => clearTimeout(priceTimer.current), []);
+  const handlePriceChange = (min: number, max: number) => {
+    clearTimeout(priceTimer.current);
+    priceTimer.current = setTimeout(() => {
+      updateFilters({
+        minPrice: min > PRICE_MIN ? String(min) : '',
+        maxPrice: max < PRICE_MAX ? String(max) : '',
+      });
+    }, 400);
   };
 
   const handleArrayFilterChange = (key: 'materials' | 'colors', value: string) => {
-    const currentArray = filters[key] as string[];
+    const currentArray = filters[key];
     const newArray = currentArray.includes(value)
       ? currentArray.filter(item => item !== value)
       : [...currentArray, value];
@@ -83,20 +130,8 @@ const Products: React.FC = () => {
   };
 
   const handlePageChange = (page: number) => {
-    const newFilters = { ...filters, page };
-    setFilters(newFilters);
-    
-    const params = new URLSearchParams();
-    Object.entries(newFilters).forEach(([k, v]) => {
-      if (v !== undefined && v !== '' && v !== false) {
-        if (Array.isArray(v)) {
-          if (v.length > 0) params.set(k, v.join(','));
-        } else {
-          params.set(k, v.toString());
-        }
-      }
-    });
-    setSearchParams(params);
+    setSearchParams(filtersToParams({ ...filters, page }));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleProductClick = (productId: string) => {
@@ -104,26 +139,19 @@ const Products: React.FC = () => {
   };
 
   const clearFilters = () => {
-    const clearedFilters = {
-      search: '',
-      category: '',
-      state: '',
-      minPrice: '',
-      maxPrice: '',
-      minRating: '',
-      materials: [],
-      colors: [],
-      inStock: false,
-      sort: 'createdAt',
-      order: 'desc',
-    };
-    setFilters(clearedFilters);
+    setSearchInput('');
     setSearchParams(new URLSearchParams());
   };
 
+  const hasActiveFilters = Boolean(
+    filters.search || filters.category || filters.state || filters.minPrice || filters.maxPrice ||
+    filters.minRating || filters.materials.length || filters.colors.length || filters.inStock
+  );
+
+  // Must match the category enum in server/models/Product.js
   const categories = [
-    'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork',
-    'Paintings', 'Bamboo', 'Leather', 'Stone', 'Glass'
+    'Pottery', 'Textiles', 'Jewelry', 'Woodwork', 'Metalwork', 'Leather', 'Bamboo', 'Stone',
+    'Glass', 'Paper', 'Home Decor', 'Kitchenware', 'Accessories', 'Clothing', 'Footwear', 'Other'
   ];
 
   const states = [
@@ -149,14 +177,6 @@ const Products: React.FC = () => {
     'Vibrant', 'Traditional', 'Modern', 'Light Brown', 'Black', 'Tan', 'Gray', 'Clear'
   ];
 
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="loading-spinner"></div>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -177,8 +197,8 @@ const Products: React.FC = () => {
               <input
                 type="text"
                 placeholder={t('products.searchPlaceholder')}
-                value={filters.search}
-                onChange={(e) => handleFilterChange('search', e.target.value)}
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
                 className="input-field pl-10 w-full"
               />
             </div>
@@ -190,9 +210,7 @@ const Products: React.FC = () => {
               >
                 <SlidersHorizontal className="w-4 h-4" />
                 {t('products.advancedFilters')}
-                {Object.values(filters).some(v => 
-                  Array.isArray(v) ? v.length > 0 : v !== undefined && v !== '' && v !== false
-                ) && (
+                {hasActiveFilters && (
                   <span className="bg-primary-600 text-white text-xs rounded-full px-2 py-1">
                     {t('products.active')}
                   </span>
@@ -259,26 +277,7 @@ const Products: React.FC = () => {
                     maxPrice={10000}
                     currentMin={parseInt(filters.minPrice) || 0}
                     currentMax={parseInt(filters.maxPrice) || 10000}
-                    onRangeChange={(min, max) => {
-                      const newFilters = { 
-                        ...filters, 
-                        minPrice: min.toString(), 
-                        maxPrice: max.toString() 
-                      };
-                      setFilters(newFilters);
-                      
-                      const params = new URLSearchParams();
-                      Object.entries(newFilters).forEach(([k, v]) => {
-                        if (v !== undefined && v !== '' && v !== false) {
-                          if (Array.isArray(v)) {
-                            if (v.length > 0) params.set(k, v.join(','));
-                          } else {
-                            params.set(k, v.toString());
-                          }
-                        }
-                      });
-                      setSearchParams(params);
-                    }}
+                    onRangeChange={handlePriceChange}
                   />
                 </div>
 
@@ -371,8 +370,7 @@ const Products: React.FC = () => {
                 value={`${filters.sort}-${filters.order}`}
                 onChange={(e) => {
                   const [sort, order] = e.target.value.split('-');
-                  handleFilterChange('sort', sort);
-                  handleFilterChange('order', order);
+                  updateFilters({ sort, order });
                 }}
                 className="input-field"
               >
@@ -415,17 +413,20 @@ const Products: React.FC = () => {
 
         {/* Products Grid */}
         {isLoading ? (
-          <div className={`grid gap-6 ${
-            viewMode === 'grid' 
-              ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
-              : 'grid-cols-1'
-          }`}>
-            {Array.from({ length: 8 }).map((_, index) => (
-              <SkeletonLoader key={index} type="product-card" />
-            ))}
+          <div>
+            <ServerWakeNotice active={isLoading} className="mb-6" />
+            <div className={`grid gap-6 ${
+              viewMode === 'grid' 
+                ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
+                : 'grid-cols-1'
+            }`}>
+              {Array.from({ length: 8 }).map((_, index) => (
+                <SkeletonLoader key={index} type="product-card" />
+              ))}
+            </div>
           </div>
         ) : productsData?.products?.length > 0 ? (
-          <div className={`grid gap-6 ${
+          <div className={`grid gap-6 transition-opacity ${isFetching ? 'opacity-60' : ''} ${
             viewMode === 'grid' 
               ? 'grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4' 
               : 'grid-cols-1'

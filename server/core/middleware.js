@@ -43,31 +43,42 @@ const helmetConfig = helmet({
   crossOriginEmbedderPolicy: false
 });
 
+// Allowed browser origins. CLIENT_URL / CORS_ORIGIN / ALLOWED_ORIGINS may each hold a
+// comma-separated list, so new front-end domains can be added from the host's env vars.
+const DEFAULT_ALLOWED_ORIGINS = [
+  'http://localhost:3000',
+  'http://localhost:3001',
+  'https://kalakari-store.vercel.app'
+];
+
+const getAllowedOrigins = () => {
+  const fromEnv = [process.env.CLIENT_URL, process.env.CORS_ORIGIN, process.env.ALLOWED_ORIGINS]
+    .filter(Boolean)
+    .flatMap(value => value.split(','));
+  if (process.env.VERCEL_URL) fromEnv.push(`https://${process.env.VERCEL_URL.replace(/^https?:\/\//, '')}`);
+  return new Set(
+    [...DEFAULT_ALLOWED_ORIGINS, ...fromEnv]
+      .map(origin => origin.trim().replace(/\/+$/, ''))
+      .filter(Boolean)
+  );
+};
+
 const corsConfig = {
   origin: function (origin, callback) {
-    const allowedOrigins = [
-      'http://localhost:3000',
-      'http://localhost:3001',
-      process.env.CLIENT_URL,
-      process.env.VERCEL_URL
-    ].filter(Boolean);
-
-    // SECURITY: In development, allow requests with no origin (e.g., mobile apps, Postman)
-    // In production, reject unknown origins
+    // Requests without an Origin header (health checks, uptime pings, curl, server-to-server)
+    // are not subject to CORS; browsers always send Origin on cross-site requests.
     if (!origin) {
-      if (process.env.NODE_ENV === 'development') {
-        return callback(null, true);
-      } else {
-        return callback(new Error('CORS: Origin required in production'), false);
-      }
+      return callback(null, true);
     }
 
-    if (allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn('CORS: Rejected origin:', origin);
-      callback(new Error('CORS policy violation: Origin not allowed'), false);
+    if (getAllowedOrigins().has(origin.replace(/\/+$/, ''))) {
+      return callback(null, true);
     }
+
+    // Unknown origin: omit the CORS headers so the browser blocks the response.
+    // Never raise an error here: that turned every request into a 500.
+    console.warn('CORS: Rejected origin:', origin);
+    return callback(null, false);
   },
   credentials: true,
   optionsSuccessStatus: 200
@@ -76,7 +87,7 @@ const corsConfig = {
 // Rate limiting configurations
 const generalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // limit each IP to 100 requests per windowMs
+  max: 300, // per IP; a normal browse (catalog, filters, product pages) fires several reads per page
   message: {
     success: false,
     message: 'Too many requests from this IP, please try again later.'
@@ -88,6 +99,9 @@ const generalLimiter = rateLimit({
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 5,
+  // Only throttle credential attempts. GET /api/auth/me runs on every page load and
+  // logout must always work; counting them locked visitors out after five page views.
+  skip: (req) => req.method === 'GET' || req.method === 'OPTIONS' || req.path === '/logout',
   message: {
     success: false,
     message: 'Too many authentication attempts, please try again later.'

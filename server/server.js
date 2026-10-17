@@ -159,8 +159,7 @@ app.get('/health', (req, res) => {
       timestamp: new Date().toISOString(),
       uptime: process.uptime(),
       version: '1.0.0',
-      database: 'disabled',
-      message: 'Database connection temporarily disabled to prevent crashes'
+      database: ['disconnected', 'connected', 'connecting', 'disconnecting'][mongoose.connection.readyState] || 'unknown'
     }
   });
 });

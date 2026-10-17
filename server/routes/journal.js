@@ -48,6 +48,10 @@ router.get('/', optionalAuth, async (req, res) => {
 // @access  Public
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ success: false, message: 'Journal post not found' });
+    }
+
     const post = await Journal.findOne({ 
       _id: req.params.id, 
       isPublished: true 

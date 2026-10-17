@@ -14,12 +14,12 @@ const ArtisanStory: React.FC = () => {
               loading="lazy"
               width="800"
               height="600"
-              src="/images/artisans/artisan_hands.png"
+              src="/images/artisans/artisan_hands.webp"
               alt="Artisan hands shaping clay on a pottery wheel"
               className="rounded-lg shadow-2xl w-full"
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = '/images/placeholder-artisan.png';
+                target.src = '/images/placeholder-artisan.webp';
               }}
             />
           </div>

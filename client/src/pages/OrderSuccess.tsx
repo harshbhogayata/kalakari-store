@@ -4,6 +4,7 @@ import { CheckCircle, Package, Home, FileText } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { generateOrderConfirmationPDF } from '../utils/pdfGenerator';
 import { Order } from '../types';
+import api from '../utils/api';
 
 const OrderSuccess: React.FC = () => {
   const navigate = useNavigate();
@@ -17,8 +18,7 @@ const OrderSuccess: React.FC = () => {
     
     try {
       setIsLoading(true);
-      const response = await fetch(`/api/orders/${orderId}`);
-      const data = await response.json();
+      const { data } = await api.get(`/api/orders/${orderId}`);
       
       if (data.success && data.data) {
         setOrder(data.data);

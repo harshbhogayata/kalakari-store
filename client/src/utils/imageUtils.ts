@@ -5,6 +5,25 @@
 import config from '../config/env';
 
 /**
+ * Bundled photos in /public/images ship as ~1 MB PNGs with ~100 KB WebP siblings
+ * (same name, .webp). Product records in the database point at the .png paths,
+ * so swap to the WebP at render time. Any other URL is returned unchanged.
+ */
+export const optimizedImage = <T extends string | undefined>(url: T): T => {
+  if (typeof url !== 'string') return url;
+  return url.replace(/^(\/images\/[^?#]+)\.png$/i, '$1.webp') as T;
+};
+
+/** If a WebP sibling is missing, fall back to the original PNG once. */
+export const webpFallback = (event: { currentTarget: HTMLImageElement }) => {
+  const img = event.currentTarget;
+  if (!img.dataset.pngFallback && /\/images\/.+\.webp$/i.test(img.src)) {
+    img.dataset.pngFallback = '1';
+    img.src = img.src.replace(/\.webp$/i, '.png');
+  }
+};
+
+/**
  * Get image URL with fallback
  * @param imageUrl - Primary image URL
  * @param fallback - Fallback image type

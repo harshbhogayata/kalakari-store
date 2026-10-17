@@ -235,7 +235,7 @@ router.get('/', async (req, res) => {
     if (state) query.state = state;
 
     const artisans = await Artisan.find(query)
-      .populate('userId', 'name email')
+      .populate('userId', 'name') // public endpoint: never expose account emails
       .select('-bankDetails -documents')
       .sort({ createdAt: -1 })
       .limit(limit * 1)
@@ -268,8 +268,12 @@ router.get('/', async (req, res) => {
 // @access  Public
 router.get('/:id', async (req, res) => {
   try {
+    if (!require('mongoose').Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({ success: false, message: 'Artisan not found' });
+    }
+
     const artisan = await Artisan.findById(req.params.id)
-      .populate('userId', 'name email')
+      .populate('userId', 'name') // public endpoint: never expose account emails
       .select('-bankDetails -documents');
 
     if (!artisan || !artisan.isApproved) {

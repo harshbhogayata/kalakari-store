@@ -10,21 +10,21 @@ const JournalSection: React.FC = () => {
       title: 'The Ancient Art of Block Printing',
       category: 'TEXTILES',
       description: 'Explore the history and intricate process behind one of India\'s most beloved textile traditions.',
-      image: '/images/journal/block_printing.png',
+      image: '/images/journal/block_printing.webp',
       delay: '0ms'
     },
     {
       title: 'A Day with the Meenakari Masters',
       category: 'BEHIND THE CRAFT',
       description: 'We sit down with a family that has been practicing the art of enamel jewelry for five generations.',
-      image: '/images/journal/meenakari.png',
+      image: '/images/journal/meenakari.webp',
       delay: '200ms'
     },
     {
       title: 'Pichwai: The Divine Paintings of Nathdwara',
       category: 'ART FORM',
       description: 'Discover the spiritual significance and detailed artistry of these stunning cloth paintings.',
-      image: '/images/journal/pichwai.png',
+      image: '/images/journal/pichwai.webp',
       delay: '400ms'
     }
   ];

@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Star, ShoppingCart, Eye, Filter, Grid, List } from 'lucide-react';
 import { Product } from '../../types';
 import WishlistButton from '../WishlistButton';
+import { optimizedImage, webpFallback } from '../../utils/imageUtils';
+import config from '../../config/env';
 
 interface SearchResultsProps {
   products: Product[];
@@ -61,7 +63,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({
       <div className="relative">
         <Link to={`/products/${product._id}`}>
           <img
-            src={product.images[0]?.url || 'https://via.placeholder.com/300x200'}
+            src={optimizedImage(product.images[0]?.url || config.images.productPlaceholder)}
+            onError={webpFallback}
             alt={product.images[0]?.alt || product.name}
             className="w-full h-48 object-cover"
           />
@@ -170,7 +173,8 @@ const SearchResults: React.FC<SearchResultsProps> = ({
         <div className="relative">
           <Link to={`/products/${product._id}`}>
             <img
-              src={product.images[0]?.url || 'https://via.placeholder.com/150x150'}
+              src={optimizedImage(product.images[0]?.url || config.images.productPlaceholder)}
+              onError={webpFallback}
               alt={product.images[0]?.alt || product.name}
               className="w-24 h-24 object-cover rounded-lg"
             />

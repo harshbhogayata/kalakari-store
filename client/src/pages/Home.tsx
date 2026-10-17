@@ -10,6 +10,7 @@ import ArtisanSpotlight from '../components/ArtisanSpotlight';
 import JournalSection from '../components/JournalSection';
 import TestimonialsSection from '../components/TestimonialsSection';
 import NotifyMeModal from '../components/NotifyMeModal';
+import ServerWakeNotice from '../components/ServerWakeNotice';
 
 const Home: React.FC = () => {
   // const { t } = useTranslation();
@@ -20,15 +21,10 @@ const Home: React.FC = () => {
   const { data: featuredProducts, isLoading } = useQuery(
     'featured-products',
     async () => {
-      try {
-        // Use mock endpoint in development mode
-        const endpoint = '/api/products';
-        const response = await api.get(`${endpoint}?featured=true&limit=8`);
-        return response.data.data?.products || [];
-      } catch (error) {
-        // Featured products loading error handled silently - will use empty array
-        return [];
-      }
+      // Let failures throw so react-query retries (the API may still be waking up);
+      // FeaturedProducts falls back to its sample cards if every attempt fails.
+      const response = await api.get('/api/products?featured=true&limit=8');
+      return response.data.data?.products || [];
     },
     {
       staleTime: 5 * 60 * 1000, // 5 minutes
@@ -48,6 +44,7 @@ const Home: React.FC = () => {
       <AnnouncementBar />
       <HeroSection />
       <FeaturesSection />
+      <ServerWakeNotice active={isLoading} className="pt-6" />
       <FeaturedProducts products={featuredProducts} isLoading={isLoading} />
       <ArtisanStory />
       <ArtisanSpotlight />

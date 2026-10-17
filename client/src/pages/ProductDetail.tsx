@@ -2,8 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useQuery } from 'react-query';
 import { Star, Share2, ShoppingCart, Truck, Shield, RotateCcw, ChevronRight, Home, ZoomIn, X } from 'lucide-react';
-import axios from 'axios';
-// import api from '../utils/api'; // TODO: Use for API calls when needed
+import api from '../utils/api';
 // import config from '../config/env';
 import { Product } from '../types';
 import { useCart } from '../contexts/CartContext';
@@ -16,6 +15,7 @@ import RecentlyViewed from '../components/Recommendations/RecentlyViewed';
 import LazyImage from '../components/LazyImage';
 import useRecommendations from '../hooks/useRecommendations';
 import toast from 'react-hot-toast';
+import { optimizedImage, webpFallback } from '../utils/imageUtils';
 
 const ProductDetail: React.FC = () => {
   const { id } = useParams<{ id: string }>();
@@ -36,8 +36,14 @@ const ProductDetail: React.FC = () => {
     async () => {
       // Use mock endpoint in development mode
       const endpoint = '/api/products';
-      const response = await axios.get(`${endpoint}/${id}`);
-      return response.data.data.product || response.data.data;
+      try {
+        const response = await api.get(`${endpoint}/${id}`);
+        return response.data.data.product || response.data.data;
+      } catch (err: any) {
+        // A 404 means the product doesn't exist: show "Product Not Found", don't retry
+        if (err?.response?.status === 404) return null;
+        throw err;
+      }
     },
     { 
       enabled: !!id,
@@ -839,7 +845,8 @@ const ProductDetail: React.FC = () => {
             
             <div className="relative">
               <img
-                src={product.images[selectedImageIndex].url}
+                src={optimizedImage(product.images[selectedImageIndex].url)}
+                onError={webpFallback}
                 alt={product.name}
                 className="max-w-full max-h-full object-contain rounded-lg"
               />
@@ -875,7 +882,8 @@ const ProductDetail: React.FC = () => {
                     }`}
                   >
                     <img
-                      src={image.url}
+                      src={optimizedImage(image.url)}
+                      onError={webpFallback}
                       alt={`${product.name} ${index + 1}`}
                       className="w-full h-full object-cover"
                     />

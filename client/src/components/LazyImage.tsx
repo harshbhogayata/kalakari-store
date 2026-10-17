@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { ImageIcon } from 'lucide-react';
+import { optimizedImage, webpFallback } from '../utils/imageUtils';
 
 interface LazyImageProps {
   src: string;
@@ -49,7 +50,13 @@ const LazyImage: React.FC<LazyImageProps> = ({
     onLoad?.();
   };
 
-  const handleError = () => {
+  const handleError = (event: React.SyntheticEvent<HTMLImageElement>) => {
+    const img = event.currentTarget;
+    // A missing WebP sibling should not show the error state: retry with the original PNG first
+    if (!img.dataset.pngFallback && /\/images\/.+\.webp$/i.test(img.src)) {
+      webpFallback(event);
+      return;
+    }
     setHasError(true);
     onError?.();
   };
@@ -84,7 +91,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
       {/* Actual image */}
       {isInView && !hasError && (
         <img
-          src={src}
+          src={optimizedImage(src)}
           alt={alt}
           className={`w-full h-full object-cover transition-opacity duration-300 ${
             isLoaded ? 'opacity-100' : 'opacity-0'

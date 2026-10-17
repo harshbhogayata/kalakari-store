@@ -64,7 +64,7 @@ export const VALIDATION = {
 
 // API timeout constants
 export const API_TIMEOUT = {
-  DEFAULT: 30000, // 30 seconds
+  DEFAULT: 60000, // 60 seconds: the free-tier API can take ~30-50s to wake from sleep
   UPLOAD: 60000, // 60 seconds
   PAYMENT: 45000, // 45 seconds
 } as const;

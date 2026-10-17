@@ -1,74 +1,12 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
+import { journalPosts } from '../data/journalPosts';
 import { Calendar, ArrowRight, Tag } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const Journal: React.FC = () => {
   const { t } = useTranslation();
-  const placeholderImage = '/images/placeholder-journal.png';
-
-  const journalPosts = [
-    {
-      id: 1,
-      title: 'The Ancient Art of Block Printing',
-      excerpt: 'Explore the history and intricate process behind one of India\'s most beloved textile traditions.',
-      image: 'https://images.unsplash.com/photo-1600661633315-7389108b31a1?q=80&w=1887&auto=format&fit=crop',
-      category: 'TEXTILES',
-      date: '2024-01-15',
-      readTime: '5 min read',
-      featured: true
-    },
-    {
-      id: 2,
-      title: 'A Day with the Meenakari Masters',
-      excerpt: 'We sit down with a family that has been practicing the art of enamel jewelry for five generations.',
-      image: 'https://images.unsplash.com/photo-1599408226244-5d0718ac8e99?q=80&w=1887&auto=format&fit=crop',
-      category: 'BEHIND THE CRAFT',
-      date: '2024-01-10',
-      readTime: '7 min read',
-      featured: false
-    },
-    {
-      id: 3,
-      title: 'Pichwai: The Divine Paintings of Nathdwara',
-      excerpt: 'Discover the spiritual significance and detailed artistry of these stunning cloth paintings.',
-      image: 'https://images.unsplash.com/photo-1621213327315-b74549071b78?q=80&w=1964&auto=format&fit=crop',
-      category: 'ART FORM',
-      date: '2024-01-05',
-      readTime: '6 min read',
-      featured: false
-    },
-    {
-      id: 4,
-      title: 'The Craft of Kalamkari: Storytelling Through Cloth',
-      excerpt: 'Understanding the traditional pen work and natural dyeing techniques of this ancient art form.',
-      image: 'https://images.unsplash.com/photo-1578662996442-48f60103fc96?q=80&w=1887&auto=format&fit=crop',
-      category: 'TEXTILES',
-      date: '2024-01-01',
-      readTime: '8 min read',
-      featured: false
-    },
-    {
-      id: 5,
-      title: 'Wood Carving Traditions of Rajasthan',
-      excerpt: 'A journey through the intricate woodwork that adorns palaces and temples across Rajasthan.',
-      image: 'https://images.unsplash.com/photo-1605910465373-455b23d9161a?q=80&w=1887&auto=format&fit=crop',
-      category: 'WOODWORK',
-      date: '2023-12-28',
-      readTime: '6 min read',
-      featured: false
-    },
-    {
-      id: 6,
-      title: 'The Art of Terracotta: From Clay to Masterpiece',
-      excerpt: 'Exploring the traditional techniques and modern innovations in terracotta craftsmanship.',
-      image: 'https://images.unsplash.com/photo-1578312401928-02431a4c442a?q=80&w=1974&auto=format&fit=crop',
-      category: 'POTTERY',
-      date: '2023-12-25',
-      readTime: '5 min read',
-      featured: false
-    }
-  ];
+  const placeholderImage = '/images/placeholder-journal.webp';
 
   const categories = [
     'All', 'TEXTILES', 'BEHIND THE CRAFT', 'ART FORM', 'WOODWORK', 'POTTERY'

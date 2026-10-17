@@ -4,6 +4,8 @@ import { TrendingUp, Clock, Star, Filter } from 'lucide-react';
 import AdvancedSearch from '../components/Search/AdvancedSearch';
 import SearchResults from '../components/Search/SearchResults';
 import { Product, SearchFilters } from '../types';
+import { useQuery } from 'react-query';
+import api from '../utils/api';
 
 const SearchPage: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -12,7 +14,7 @@ const SearchPage: React.FC = () => {
   const [showQuickFilters, setShowQuickFilters] = useState(false);
 
   // Initialize filters from URL params
-  const [, setFilters] = useState<SearchFilters>({
+  const [filters, setFilters] = useState<SearchFilters>({
     query: searchParams.get('q') || '',
     category: searchParams.get('category') || '',
     artisanId: searchParams.get('artisan') || '',
@@ -28,13 +30,34 @@ const SearchPage: React.FC = () => {
     limit: 12
   });
 
-  // Simplified search state
-  const [products] = useState<any[]>([]);
-  const [isLoading] = useState(false);
-  const [error] = useState<string | null>(null);
-  const [total] = useState(0);
-  const [page] = useState(1);
-  const [totalPages] = useState(1);
+  // Fetch results for the current filters (this page previously never called the API)
+  const { data: results, isLoading, error } = useQuery(
+    ['search-page', filters],
+    async () => {
+      const params = new URLSearchParams();
+      if (filters.query) params.set('search', filters.query);
+      if (filters.category) params.set('category', filters.category);
+      if (filters.artisanId) params.set('artisanId', filters.artisanId);
+      if (filters.minPrice !== undefined) params.set('minPrice', String(filters.minPrice));
+      if (filters.maxPrice !== undefined) params.set('maxPrice', String(filters.maxPrice));
+      if (filters.minRating !== undefined) params.set('minRating', String(filters.minRating));
+      if (filters.inStock) params.set('inStock', 'true');
+      if (filters.materials?.length) params.set('materials', filters.materials.join(','));
+      if (filters.colors?.length) params.set('colors', filters.colors.join(','));
+      params.set('sort', filters.sortBy || 'popularity');
+      params.set('order', filters.sortOrder || 'desc');
+      params.set('page', String(filters.page || 1));
+      params.set('limit', String(filters.limit || 12));
+      const response = await api.get(`/api/products?${params.toString()}`);
+      return response.data.data;
+    },
+    { keepPreviousData: true, staleTime: 60 * 1000 }
+  );
+
+  const products: Product[] = results?.products || [];
+  const total: number = results?.pagination?.total || 0;
+  const page: number = results?.pagination?.current || filters.page || 1;
+  const totalPages: number = results?.pagination?.pages || 1;
 
   // Quick filter options
   const quickFilters = [

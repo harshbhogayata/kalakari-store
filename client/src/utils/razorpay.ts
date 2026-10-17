@@ -1,6 +1,7 @@
 // Razorpay integration utilities
 
 import config from '../config/env';
+import api from './api';
 
 interface RazorpayOptions {
   key: string;
@@ -44,19 +45,11 @@ export const loadRazorpayScript = (): Promise<boolean> => {
 
 export const createRazorpayOrder = async (amount: number, receipt?: string) => {
   try {
-    const response = await fetch('/api/payment/create-order', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        amount,
-        currency: 'INR',
-        receipt: receipt || `receipt_${Date.now()}`
-      }),
+    const { data } = await api.post('/api/payment/create-order', {
+      amount,
+      currency: 'INR',
+      receipt: receipt || `receipt_${Date.now()}`
     });
-
-    const data = await response.json();
     
     if (data.success) {
       return data.data;
@@ -70,19 +63,11 @@ export const createRazorpayOrder = async (amount: number, receipt?: string) => {
 
 export const verifyPayment = async (orderId: string, paymentId: string, signature: string) => {
   try {
-    const response = await fetch('/api/payment/verify', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        orderId,
-        paymentId,
-        signature
-      }),
+    const { data } = await api.post('/api/payment/verify', {
+      orderId,
+      paymentId,
+      signature
     });
-
-    const data = await response.json();
     return data;
   } catch (error) {
     throw error;

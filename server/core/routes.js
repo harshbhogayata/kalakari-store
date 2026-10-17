@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 const multer = require('multer');
 const path = require('path');
+const mongoose = require('mongoose');
 
 // Models
 const User = require('../models/User');
@@ -241,11 +242,26 @@ productRoutes.get('/', optionalAuth, async (req, res) => {
     } = req.query;
 
     const query = { isActive: true, isApproved: true };
-    
+    const pageNum = Math.max(parseInt(page, 10) || 1, 1);
+    const limitNum = Math.min(Math.max(parseInt(limit, 10) || 12, 1), 100);
+
     // Basic filters
     if (category) query.category = category;
-    if (artisanId) query.artisanId = artisanId;
+    if (artisanId) {
+      if (!mongoose.Types.ObjectId.isValid(artisanId)) {
+        return res.json({ success: true, data: { products: [], pagination: { current: pageNum, pages: 0, total: 0, limit: limitNum } } });
+      }
+      query.artisanId = artisanId;
+    }
     if (featured === 'true') query.isFeatured = true;
+
+    // State filter: resolve matching artisans first so counts and pagination stay correct
+    if (state) {
+      const artisanIds = await Artisan.find({ state }).distinct('_id');
+      query.artisanId = query.artisanId
+        ? (artisanIds.some(id => id.equals(query.artisanId)) ? query.artisanId : { $in: [] })
+        : { $in: artisanIds };
+    }
     
     // Price range
     if (minPrice || maxPrice) {
@@ -276,50 +292,48 @@ productRoutes.get('/', optionalAuth, async (req, res) => {
       query.colors = { $in: colorArray };
     }
     
-    // Text search
+    // Text search (escape user input so characters like "(" or "+" can't break the regex)
     if (search) {
+      const pattern = new RegExp(String(search).replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i');
       query.$or = [
-        { name: { $regex: search, $options: 'i' } },
-        { description: { $regex: search, $options: 'i' } },
-        { tags: { $in: [new RegExp(search, 'i')] } }
+        { name: pattern },
+        { description: pattern },
+        { tags: pattern }
       ];
     }
 
-    const sortOrder = order === 'desc' ? -1 : 1;
-    const sortObj = {};
-    sortObj[sort] = sortOrder;
+    // Only allow known sort keys; map UI names onto real fields
+    const SORT_FIELDS = {
+      createdAt: 'createdAt',
+      price: 'price',
+      name: 'name',
+      rating: 'rating.average',
+      popularity: 'stats.views',
+      views: 'stats.views',
+      orders: 'stats.orders'
+    };
+    const sortField = SORT_FIELDS[sort] || 'createdAt';
+    const sortObj = { [sortField]: order === 'asc' ? 1 : -1 };
+    if (sortField !== 'createdAt') sortObj._id = 1; // stable order across pages
 
-    let productsQuery = Product.find(query);
-    
-    // Add state filter to populated artisan
-    if (state) {
-      productsQuery = productsQuery.populate({
-        path: 'artisanId',
-        match: { state: state },
-        select: 'businessName state city craftType'
-      });
-    } else {
-      productsQuery = productsQuery.populate('artisanId', 'businessName state city craftType');
-    }
-
-    const total = await Product.countDocuments(query);
-    const products = await productsQuery
-      .sort(sortObj)
-      .limit(limit * 1)
-      .skip((page - 1) * limit);
-
-    // Filter out products with null artisans (for state filter)
-    const filteredProducts = products.filter(product => product.artisanId !== null);
+    const [total, products] = await Promise.all([
+      Product.countDocuments(query),
+      Product.find(query)
+        .populate('artisanId', 'businessName state city craftType')
+        .sort(sortObj)
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum)
+    ]);
 
     res.json({
       success: true,
       data: {
-        products: filteredProducts,
+        products: products.filter(product => product.artisanId !== null),
         pagination: {
-          current: parseInt(page),
-          pages: Math.ceil(total / limit),
+          current: pageNum,
+          pages: Math.ceil(total / limitNum),
           total,
-          limit: parseInt(limit)
+          limit: limitNum
         }
       }
     });
@@ -335,9 +349,18 @@ productRoutes.get('/', optionalAuth, async (req, res) => {
 // Get single product
 productRoutes.get('/:id', optionalAuth, async (req, res) => {
   try {
+    // Non-ObjectId ids (e.g. "/featured", "/categories", typos) are a 404, not a server error
+    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
+      return res.status(404).json({
+        success: false,
+        message: 'Product not found'
+      });
+    }
+
+    // Reviews live in their own collection (see routes/reviews.js); Product has no `reviews` path,
+    // so populating 'reviews.userId' threw StrictPopulateError and every product page returned 500.
     const product = await Product.findById(req.params.id)
-      .populate('artisanId', 'businessName state city craftType description rating')
-      .populate('reviews.userId', 'name');
+      .populate('artisanId', 'businessName state city craftType description rating');
 
     if (!product || !product.isActive || !product.isApproved) {
       return res.status(404).json({

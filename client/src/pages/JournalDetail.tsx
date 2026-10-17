@@ -4,6 +4,7 @@ import { ArrowLeft, Calendar, Tag, Share2, Heart, BookOpen } from 'lucide-react'
 import { useQuery } from 'react-query';
 import DOMPurify from 'dompurify';
 import api from '../utils/api';
+import { findJournalPost } from '../data/journalPosts';
 
 interface JournalPost {
   _id: string;
@@ -26,11 +27,25 @@ const JournalDetail: React.FC = () => {
   const { data: post, isLoading, error } = useQuery(
     ['journal-post', id],
     async () => {
+      // Articles listed on /journal live in the client; use them when the API has no such post
+      const local = findJournalPost(id);
+      const fromLocal = (): JournalPost | undefined => local && {
+        _id: String(local.id),
+        title: local.title,
+        excerpt: local.excerpt,
+        content: '',
+        author: 'Kalakari Editorial',
+        publishedAt: local.date,
+        category: local.category,
+        tags: [],
+        featuredImage: local.image,
+        readTime: local.readTime,
+      };
       try {
         const response = await api.get(`/api/journal/${id}`);
-        return response.data.data?.post;
+        return response.data.data?.post || fromLocal();
       } catch (error) {
-        console.error('Failed to fetch journal post:', error);
+        if (local) return fromLocal();
         throw error;
       }
     },

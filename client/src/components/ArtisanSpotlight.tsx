@@ -10,17 +10,17 @@ const ArtisanSpotlight: React.FC = () => {
     title: 'FEATURED ARTISAN: WEAVER',
     quote: '"The loom is a part of my family. Every thread tells the story of my ancestors, and I weave that story into every shawl."',
     description: 'From a small village in the Kullu Valley, Rina Devi has been weaving for over 25 years, a skill passed down to her from her mother and grandmother. She uses only hand-spun local wool and natural dyes made from flowers and minerals found in the Himalayan foothills. Her work is renowned for its intricate geometric patterns and exceptional softness.',
-    image: '/images/artisans/rina_devi.png',
+    image: '/images/artisans/rina_devi.webp',
     products: [
       {
         name: 'Kullu Handwoven Shawl',
         price: 2800,
-        image: '/images/products/shawl.png'
+        image: '/images/products/shawl.webp'
       },
       {
         name: 'Himalayan Woolen Scarf',
         price: 1950,
-        image: '/images/products/scarf.png'
+        image: '/images/products/scarf.webp'
       }
     ]
   };
@@ -45,7 +45,7 @@ const ArtisanSpotlight: React.FC = () => {
               alt={`Portrait of ${featuredArtisan.name}`}
               onError={(e) => {
                 const target = e.target as HTMLImageElement;
-                target.src = '/images/placeholder-artisan.png';
+                target.src = '/images/placeholder-artisan.webp';
               }}
             />
           </div>

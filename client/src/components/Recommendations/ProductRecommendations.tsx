@@ -8,6 +8,8 @@ import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../utils/api';
 import toast from 'react-hot-toast';
+import { optimizedImage, webpFallback } from '../../utils/imageUtils';
+import config from '../../config/env';
 
 interface ProductRecommendationsProps {
   productId: string;
@@ -90,7 +92,8 @@ const ProductRecommendations: React.FC<ProductRecommendationsProps> = ({
           >
             <Link to={`/products/${product._id}`}>
               <img
-                src={product.images[0]?.url || 'https://via.placeholder.com/300x200'}
+                src={optimizedImage(product.images[0]?.url || config.images.productPlaceholder)}
+                onError={webpFallback}
                 alt={product.name}
                 className="w-full h-48 object-cover"
               />

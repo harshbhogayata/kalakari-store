@@ -34,7 +34,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => {
       }
 
       // Use mock endpoint in development mode
-      const endpoint = `/api/products/${productId}/reviews`;
+      const endpoint = `/api/reviews/products/${productId}/reviews`;
       
       const response = await api.get(`${endpoint}?${params}`);
       return response.data.data;
@@ -48,7 +48,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => {
   const submitReviewMutation = useMutation(
     async (reviewData: any) => {
       // Use mock endpoint in development mode
-      const endpoint = `/api/products/${productId}/reviews`;
+      const endpoint = `/api/reviews/products/${productId}/reviews`;
 
       if (process.env.NODE_ENV === 'development') {
         // For development, send as JSON
@@ -97,7 +97,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => {
   const helpfulMutation = useMutation(
     async (reviewId: string) => {
       // Use mock endpoint in development mode
-      const endpoint = `/api/reviews/${reviewId}/helpful`;
+      const endpoint = `/api/reviews/reviews/${reviewId}/helpful`;
       
       const response = await api.post(endpoint);
       return response.data;
@@ -116,7 +116,7 @@ const ReviewsSection: React.FC<ReviewsSectionProps> = ({ productId }) => {
   const respondMutation = useMutation(
     async ({ reviewId, response }: { reviewId: string; response: string }) => {
       // Use mock endpoint in development mode
-      const endpoint = `/api/reviews/${reviewId}/respond`;
+      const endpoint = `/api/reviews/reviews/${reviewId}/respond`;
       
       const apiResponse = await api.post(endpoint, { response });
       return apiResponse.data;

@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
 import { Order, OrderItem } from '../types';
+import api from './api';
 
 // Type assertion for jsPDF with autoTable
 type jsPDFWithAutoTable = jsPDF & {
@@ -317,8 +318,7 @@ export const generateOrderConfirmationPDF = (invoiceData: InvoiceData): void => 
 export const downloadOrderInvoice = async (orderId: string): Promise<void> => {
   try {
     // Fetch order details
-    const response = await fetch(`/api/orders/${orderId}`);
-    const data = await response.json();
+    const { data } = await api.get(`/api/orders/${orderId}`);
     
     if (data.success && data.data) {
       const order = data.data;
